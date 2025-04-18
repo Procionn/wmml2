@@ -7,6 +7,8 @@
 
 // namespace stc {
 
+
+
 class wmml_marker {
 };
 
@@ -19,6 +21,9 @@ void use(T t) {
 template <>
 void use<wmml_marker>(wmml_marker t);
 #endif
+
+
+
 
 
 
@@ -176,10 +181,9 @@ void write_sector (T& t) {
    targetFile.write(reinterpret_cast<char*>(&t), sizeof(t));
 }
 
-template <>
-void write_sector<std::string> (std::string& t);
-
-
 };   // wmml
+
+template <>
+void wmml::write_sector<std::string> (std::string& t);
 
 // }    // stc
