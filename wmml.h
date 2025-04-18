@@ -81,7 +81,7 @@ private:
    unsigned int height_;
 public:
    wmml(const std::filesystem::path& path);
-   wmml(const std::filesystem::path& path, short unsigned size);
+   wmml(const std::filesystem::path& path, short unsigned width);
    ~wmml();
    unsigned height();
    unsigned short width();
@@ -111,7 +111,7 @@ char this_type (T& t) {
    if constexpr (std::is_same<T, wchar_t>::value)                   return WCHAR_T;
    if constexpr (std::is_same<T, std::string>::value) {
         std::size_t size = t.size();
-        if (size < 256)                                             return STRING;
+        if      (size < 256)                                        return STRING;
         else if (size < 65535)                                      return STRING64K;
         else if (size < 4294967296)                                 return STRING1KK;
         else throw "WMML ERROR: string is a very big!";
@@ -125,101 +125,59 @@ char this_type (T& t) {
 }
 
 
+
 template <typename T>
-// это можно попытаться разбить, сделав специализацию частную для строки
-variant caseTemplate (char type) {
-    switch (type) {
-    case 0: {
-       T out;
-       targetFile.read(reinterpret_cast<char*>(&out), sizeof(out));
-       return out;
-       }
-    case 1: {
-       unsigned char size;
-       targetFile.read(reinterpret_cast<char*>(&size), sizeof(size));
-       std::string out(size, '\0');
-       targetFile.read(out.data(), size);
-       return out;
-       }
-    case 2: {
-       unsigned short int size;
-       targetFile.read(reinterpret_cast<char*>(&size), sizeof(size));
-       std::string out(size, '\0');
-       targetFile.read(out.data(), size);
-       return out;
-       }
-    case 3: {
-       unsigned int size;
-       targetFile.read(reinterpret_cast<char*>(&size), sizeof(size));
-       std::string out(size, '\0');
-       targetFile.read(out.data(), size);
-       return out;
-       }
-    }
-    return NULL;
+auto read_sector_caseTemplate () {
+   T out;
+   targetFile.read(reinterpret_cast<char*>(&out), sizeof(out));
+   return out;
 }
+
+std::string read_sector_caseString (char type);
 
 
 variant read_sector() {
    unsigned char id;
    targetFile.read(reinterpret_cast<char*>(&id), sizeof(id));
    switch (id) {
-    case INT:                       return caseTemplate<int>(0);
-    case UNSIGNED_INT:              return caseTemplate<unsigned int>(0);
-    case LONG_INT:                  return caseTemplate<long int>(0);
-    case UNSIGNED_LONG_INT:         return caseTemplate<unsigned long int>(0);
-    case LONG_LONG_INT:             return caseTemplate<long long int>(0);
-	case UNSIGNED_LONG_LONG_INT:	return caseTemplate<unsigned long long int>(0);
-    case SHORT_INT:                 return caseTemplate<short int>(0);
-    case UNSIGNED_SHORT_INT:        return caseTemplate<unsigned short int>(0);
+    case INT:                       return read_sector_caseTemplate<int>();
+    case UNSIGNED_INT:              return read_sector_caseTemplate<unsigned int>();
+    case LONG_INT:                  return read_sector_caseTemplate<long int>();
+    case UNSIGNED_LONG_INT:         return read_sector_caseTemplate<unsigned long int>();
+    case LONG_LONG_INT:             return read_sector_caseTemplate<long long int>();
+    case UNSIGNED_LONG_LONG_INT:	return read_sector_caseTemplate<unsigned long long int>();
+    case SHORT_INT:                 return read_sector_caseTemplate<short int>();
+    case UNSIGNED_SHORT_INT:        return read_sector_caseTemplate<unsigned short int>();
 
-    case CHAR:                      return caseTemplate<char>(0);
-    case SIGNED_CHAR:               return caseTemplate<signed char>(0);
-    case UNSIGNED_CHAR:             return caseTemplate<unsigned char>(0);
-    case WCHAR_T:                   return caseTemplate<wchar_t>(0);
-    case STRING:                    return caseTemplate<std::string>(1);
-    case STRING64K:                 return caseTemplate<std::string>(2);
-    case STRING1KK:                 return caseTemplate<std::string>(3);
+    case CHAR:                      return read_sector_caseTemplate<char>();
+    case SIGNED_CHAR:               return read_sector_caseTemplate<signed char>();
+    case UNSIGNED_CHAR:             return read_sector_caseTemplate<unsigned char>();
+    case WCHAR_T:                   return read_sector_caseTemplate<wchar_t>();
+    case STRING:                    return read_sector_caseString(1);
+    case STRING64K:                 return read_sector_caseString(2);
+    case STRING1KK:                 return read_sector_caseString(3);
 
-    case FLOAT:                     return caseTemplate<float>(0);
-    case DOUBLE:                    return caseTemplate<double>(0);
-    case LONG_DOUBLE:               return caseTemplate<long double>(0);
-    case WMML:                      return caseTemplate<wmml_marker>(0);
+    case FLOAT:                     return read_sector_caseTemplate<float>();
+    case DOUBLE:                    return read_sector_caseTemplate<double>();
+    case LONG_DOUBLE:               return read_sector_caseTemplate<long double>();
 
-    case BOOL:                      return caseTemplate<bool>(0);
+    case WMML:                      return read_sector_caseTemplate<wmml_marker>();
+    case BOOL:                      return read_sector_caseTemplate<bool>();
 	default : throw "WMML ERROR (in reader): unknown type id";
    }
 }
+
 
 
 template <typename T>
 void write_sector (T& t) {
    char hash = this_type(t);
    targetFile.write((&hash), sizeof(char));
-
-   if constexpr (std::is_same<T, std::string>::value) {
-        switch (hash) {
-         case STRING: {
-            char size = t.size();
-            targetFile.write(reinterpret_cast<char*>(&size), sizeof(size));
-            targetFile.write(reinterpret_cast<char*>(t.data()), size);
-            }break;
-         case STRING64K: {
-            unsigned short int size = t.size();
-            targetFile.write(reinterpret_cast<char*>(&size), sizeof(size));
-            targetFile.write(reinterpret_cast<char*>(t.data()), size);
-            }break;
-         case STRING1KK: {
-            unsigned int size = t.size();
-            targetFile.write(reinterpret_cast<char*>(&size), sizeof(size));
-            targetFile.write(reinterpret_cast<char*>(t.data()), size);
-            }break;
-        }
-    }
-    else {
-        targetFile.write(reinterpret_cast<char*>(&t), sizeof(t));
-    }
+   targetFile.write(reinterpret_cast<char*>(&t), sizeof(t));
 }
+
+template <>
+void write_sector<std::string> (std::string& t);
 
 
 };   // wmml

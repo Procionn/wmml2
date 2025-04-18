@@ -22,7 +22,8 @@ wmml::wmml (const std::filesystem::path& path, short unsigned width) {
        throw " WMML ERROR: file is not open";
 
    height_ = 0;
-   targetFile.write(reinterpret_cast<char*>(&width), sizeof(short unsigned int));
+   width_ = width;
+   targetFile.write(reinterpret_cast<char*>(&width_), sizeof(short unsigned int));
    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
 }
 
@@ -45,24 +46,25 @@ unsigned short wmml::width () {
 
 
 
-// не забыть добавить увеличение и перезапись height при вызове данного метода!!!!!!!!!!!!!!!!
+
 void wmml::write (std::vector<variant>& writeble) {
    if (writeble.size() != width_)
-	throw "WMML ERROR: The size of the recorded object must be equal to the file width_";
+        throw "WMML ERROR: The size of the recorded object must be equal to the file width_";
    for (auto& entry : writeble)
-	std::visit([&](auto& parameter) {
-	    write_sector(parameter);
-	}, entry);
+        std::visit([&](auto& parameter) {
+            write_sector(parameter);
+        }, entry);
    ++height_;
 }
 
 
 bool wmml::read(std::vector<variant>& output) {
-   if (width_ != output.size()) throw "WMML ERROR: похуй";
+   if (width_ != output.size())
+        throw "WMML ERROR: The size of the container does not match the file width_";
    if (targetFile.eof()) return false;
-   for (int i = 0, size = width_; i != size;) {
-	output[i] = read_sector();
-	++i;
+   for (int i = 0, size = width_; i != size; ++i) {
+        if (targetFile.eof()) return false;
+        output[i] = read_sector();
    }
    return true;
 }
@@ -104,9 +106,66 @@ bool wmml::skip () {
 
 
 
+
+std::string wmml::read_sector_caseString (char type) {
+    switch (type) {
+        case 1: {
+            unsigned char size;
+            targetFile.read(reinterpret_cast<char*>(&size), sizeof(size));
+            std::string out(size, '\0');
+            targetFile.read(out.data(), size);
+            return out;
+        }
+        case 2: {
+            unsigned short int size;
+            targetFile.read(reinterpret_cast<char*>(&size), sizeof(size));
+            std::string out(size, '\0');
+            targetFile.read(out.data(), size);
+            return out;
+        }
+        case 3: {
+            unsigned int size;
+            targetFile.read(reinterpret_cast<char*>(&size), sizeof(size));
+            std::string out(size, '\0');
+            targetFile.read(out.data(), size);
+            return out;
+        }
+    }
+    return NULL;
+}
+
+
+
+
+template <>
+void wmml::write_sector<std::string> (std::string& t) {
+    char hash = this_type(t);
+    targetFile.write((&hash), sizeof(char));
+    switch (hash) {
+        case STRING: {
+            char size = t.size();
+            targetFile.write(reinterpret_cast<char*>(&size), sizeof(size));
+            targetFile.write(reinterpret_cast<char*>(t.data()), size);
+            }break;
+        case STRING64K: {
+            unsigned short int size = t.size();
+            targetFile.write(reinterpret_cast<char*>(&size), sizeof(size));
+            targetFile.write(reinterpret_cast<char*>(t.data()), size);
+            }break;
+        case STRING1KK: {
+            unsigned int size = t.size();
+            targetFile.write(reinterpret_cast<char*>(&size), sizeof(size));
+            targetFile.write(reinterpret_cast<char*>(t.data()), size);
+            }break;
+    }
+}
+
+
+
+
 #ifndef NDEBUG
 template<>
-void use<wmml_marker>(wmml_marker t) {
+void use<wmml_marker> (wmml_marker t) {
     std::cout << "it's a wmml!" << std::endl;
 }
 #endif
