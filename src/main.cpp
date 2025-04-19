@@ -7,7 +7,7 @@ int main()
 {
     try {
 
-#define MODE (1)
+#define MODE (0)
 #if MODE
         wmml* lib = new wmml("file.wmml");
         // print(lib->width());
@@ -25,7 +25,7 @@ int main()
 
         lib->write(v);
         delete lib;
-// #elif TRUE
+#elif TRUE
         wmml* lb = new wmml("file.wmml");
         int t = 2016;
         lb->overwriting_sector(2, 2, t);

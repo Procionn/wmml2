@@ -217,6 +217,8 @@ void write_sector (T& t) {
 
 template<typename T>
 void overwriting(int& object_index, int& sector_index, T& new_data) {
+    if (sector_index > width_)
+        throw "WMML ERROR: the field does not belong to the object";
     targetFile.seekp(sizeof(height_) + sizeof(width_));
     --object_index;
     std::size_t index = (object_index * width_) + sector_index;
@@ -226,6 +228,7 @@ void overwriting(int& object_index, int& sector_index, T& new_data) {
     char new_id = this_type(new_data);
     unsigned char id = 0;
     targetFile.read(reinterpret_cast<char*>(&id), sizeof(id));
+    targetFile.seekp(targetFile.tellg());
     if (new_id != id)
         throw "WMML ERROR (in overwriting): the type of the old object does not match the new one";
     targetFile.write(reinterpret_cast<char*>(&new_data), sizeof(new_data));
