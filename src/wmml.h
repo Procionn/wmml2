@@ -4,6 +4,9 @@
 #include <vector>
 #include <iostream>
 #include <variant>
+#ifndef NDEBUG
+#include <typeinfo>
+#endif
 
 // namespace stc {
 
@@ -15,7 +18,7 @@ class wmml_marker {
 #ifndef NDEBUG
 template <typename T>
 void use(T t) {
-    std::cout << t << std::endl;
+    std::cout << typeid(t).name() << " -> " << t << std::endl;
 }
 
 template <>
@@ -31,7 +34,7 @@ class wmml
 {
 
 enum formats {
-   INT,
+   INT = 1,
    UNSIGNED_INT,
    LONG_INT,
    UNSIGNED_LONG_INT,
@@ -84,6 +87,8 @@ private:
    std::fstream targetFile;
    short unsigned int width_;
    unsigned int height_;
+   char error_ = 0;
+   std::size_t end_;
 public:
    wmml(const std::filesystem::path& path);
    wmml(const std::filesystem::path& path, short unsigned width);
@@ -118,7 +123,7 @@ char this_type (T& t) {
         std::size_t size = t.size();
         if      (size < 256)                                        return STRING;
         else if (size < 65535)                                      return STRING64K;
-        else if (size < 4294967296)                                 return STRING1KK;
+        else if (size < 4294967295)                                 return STRING1KK;
         else throw "WMML ERROR: string is a very big!";
    }
    if constexpr (std::is_same<T, float>::value)                     return FLOAT;
@@ -142,9 +147,11 @@ std::string read_sector_caseString (char type);
 
 
 variant read_sector() {
-   unsigned char id;
+   error_ = 0;
+   unsigned char id = 0;
    targetFile.read(reinterpret_cast<char*>(&id), sizeof(id));
    switch (id) {
+    case 0:                         error_ = 1;
     case INT:                       return read_sector_caseTemplate<int>();
     case UNSIGNED_INT:              return read_sector_caseTemplate<unsigned int>();
     case LONG_INT:                  return read_sector_caseTemplate<long int>();

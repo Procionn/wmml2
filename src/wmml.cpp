@@ -1,11 +1,13 @@
 #include "wmml.h"
 
 wmml::wmml (const std::filesystem::path& path) {
-   targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out);
+   targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
 
    if (!targetFile.is_open())
 	throw "WMML ERROR: the opened file does not exists!";
    else {
+    end_ = targetFile.tellp();
+    targetFile.seekp(0);
 	targetFile.read(reinterpret_cast<char*>(&width_), sizeof(short unsigned int));
 	targetFile.read(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
    }
@@ -17,12 +19,14 @@ wmml::wmml (const std::filesystem::path& path, short unsigned width) {
    std::ofstream created_file(path, std::ios::binary);
    created_file.close();
 
-   targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out);
+   targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
    if (!targetFile.is_open())
        throw " WMML ERROR: file is not open";
 
    height_ = 0;
    width_ = width;
+   end_ = targetFile.tellp();
+   targetFile.seekp(0);
    targetFile.write(reinterpret_cast<char*>(&width_), sizeof(short unsigned int));
    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
 }
@@ -50,6 +54,8 @@ unsigned short wmml::width () {
 void wmml::write (std::vector<variant>& writeble) {
    if (writeble.size() != width_)
         throw "WMML ERROR: The size of the recorded object must be equal to the file width_";
+   if (end_ != targetFile.tellp())
+       targetFile.seekp(end_);
    for (auto& entry : writeble)
         std::visit([&](auto& parameter) {
             write_sector(parameter);
@@ -61,10 +67,12 @@ void wmml::write (std::vector<variant>& writeble) {
 bool wmml::read(std::vector<variant>& output) {
    if (width_ != output.size())
         throw "WMML ERROR: The size of the container does not match the file width_";
-   if (targetFile.eof()) return false;
    for (int i = 0, size = width_; i != size; ++i) {
-        if (targetFile.eof()) return false;
         output[i] = read_sector();
+        switch(error_) {
+         case 0: continue;
+         case 1: return false;
+        }
    }
    return true;
 }
@@ -73,11 +81,11 @@ bool wmml::read(std::vector<variant>& output) {
 
 
 bool wmml::skip () {
-   if (targetFile.eof()) return false;
-   char id;
+   char id = 0;
    std::size_t size;
    targetFile.read(&id, sizeof(id));
    switch (id) {
+        case 0:                         return false;
         case INT:                       size = sizeof(int);
         case UNSIGNED_INT:              size = sizeof(unsigned int);
         case LONG_INT:                  size = sizeof(long int);

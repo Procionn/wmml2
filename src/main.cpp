@@ -1,12 +1,15 @@
 #include <iostream>
+#define TRUE (1)
 
 #include "wmml.h"
 
 int main()
 {
     try {
-// #if 0
-        wmml* lib = new wmml("file.wmml", 5);
+
+#define MODE (0)
+#if MODE
+        wmml* lib = new wmml("file.wmml");
         std::vector<wmml::variant> v(lib->width());
 
         signed int a        = 2090345;
@@ -22,18 +25,19 @@ int main()
 
         lib->write(v);
         delete lib;
-// #endif
-#if 0
+#elif TRUE
         wmml readed("file.wmml");
         std::vector<wmml::variant> r(readed.width());
         int tst = 0;
+        // readed.read(r);
         while (readed.read(r)) {
-            std::cout << "tst: " << tst << std::endl;
-            // for (auto& entry : r) {
-            //     std::visit([&](auto& parameter) {
-            //         use(parameter);
-            //     }, entry);
-            // }
+            std::cout << "\n" << "reader cycle: " << tst << "\n" << std::endl;
+        for (auto& entry : r) {
+            std::visit([&](auto& parameter) {
+                use(parameter);
+            }, entry);
+        }
+        ++tst;
         }
 #endif
     } catch (const char *error_code) {
