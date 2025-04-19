@@ -9,9 +9,9 @@ int main()
 
 #define MODE (0)
 #if MODE
-        wmml* lib = new wmml("file.wmml");
+        wmml* lib = new wmml("file.wmml"/*, 5*/);
+        // print(lib->width());
         std::vector<wmml::variant> v(lib->width());
-
         signed int a        = 2090345;
         int b               = 123;
         float c             = 0.5;

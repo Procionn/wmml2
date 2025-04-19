@@ -19,20 +19,19 @@ wmml::wmml (const std::filesystem::path& path, short unsigned width) {
    std::ofstream created_file(path, std::ios::binary);
    created_file.close();
 
-   targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
+   targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out);
    if (!targetFile.is_open())
        throw " WMML ERROR: file is not open";
 
    height_ = 0;
    width_ = width;
-   end_ = targetFile.tellp();
-   targetFile.seekp(0);
-   targetFile.write(reinterpret_cast<char*>(&width_), sizeof(short unsigned int));
+   targetFile.write(reinterpret_cast<char*>(&width_), sizeof(unsigned short int));
    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
+   end_ = targetFile.tellp();
 }
 
 wmml::~wmml () {
-   targetFile.seekp(sizeof(short unsigned int));
+   targetFile.seekp(sizeof(unsigned short int));
    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
    targetFile.close();
 }
