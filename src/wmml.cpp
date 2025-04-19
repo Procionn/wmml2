@@ -84,26 +84,42 @@ bool wmml::skip () {
    std::size_t size;
    targetFile.read(&id, sizeof(id));
    switch (id) {
+#ifndef NDEBUG
+        case 0:                         std::cout << false << std::endl; return false;
+#elif 1
         case 0:                         return false;
-        case INT:                       size = sizeof(int);
-        case UNSIGNED_INT:              size = sizeof(unsigned int);
-        case LONG_INT:                  size = sizeof(long int);
-        case UNSIGNED_LONG_INT:         size = sizeof(unsigned long int);
-        case LONG_LONG_INT:             size = sizeof(long long int);
-        case UNSIGNED_LONG_LONG_INT:    size = sizeof(unsigned long long int);
-        case SHORT_INT:                 size = sizeof(short int);
-        case UNSIGNED_SHORT_INT:        size = sizeof(unsigned short int);
+#endif
+        case INT:                       size = sizeof(int);                     break;
+        case UNSIGNED_INT:              size = sizeof(unsigned int);            break;
+        case LONG_INT:                  size = sizeof(long int);                break;
+        case UNSIGNED_LONG_INT:         size = sizeof(unsigned long int);       break;
+        case LONG_LONG_INT:             size = sizeof(long long int);           break;
+        case UNSIGNED_LONG_LONG_INT:    size = sizeof(unsigned long long int);  break;
+        case SHORT_INT:                 size = sizeof(short int);               break;
+        case UNSIGNED_SHORT_INT:        size = sizeof(unsigned short int);      break;
 
-        case CHAR:                      size = sizeof(char);
-        case SIGNED_CHAR:               size = sizeof(signed char);
-        case UNSIGNED_CHAR:             size = sizeof(unsigned char);
-        case WCHAR_T:                   size = sizeof(wchar_t);
+        case CHAR:                      size = sizeof(char);                    break;
+        case SIGNED_CHAR:               size = sizeof(signed char);             break;
+        case UNSIGNED_CHAR:             size = sizeof(unsigned char);           break;
+        case WCHAR_T:                   size = sizeof(wchar_t);                 break;
+        case STRING:{                   unsigned char temp_size;
+                                        targetFile.read(reinterpret_cast<char*>
+                                        (&temp_size),sizeof(temp_size));
+                                        size = temp_size;                      }break;
+        case STRING64K:{                unsigned short int temp_size;
+                                        targetFile.read(reinterpret_cast<char*>
+                                        (&temp_size),sizeof(temp_size));
+                                        size = temp_size;                      }break;
+        case STRING1KK:{                unsigned int temp_size;
+                                        targetFile.read(reinterpret_cast<char*>
+                                        (&temp_size),sizeof(temp_size));
+                                        size = temp_size;                      }break;
 
-        case FLOAT:                     size = sizeof(float);
-        case DOUBLE:                    size = sizeof(double);
-        case LONG_DOUBLE:               size = sizeof(long double);
+        case FLOAT:                     size = sizeof(float);                   break;
+        case DOUBLE:                    size = sizeof(double);                  break;
+        case LONG_DOUBLE:               size = sizeof(long double);             break;
 
-        case BOOL:                      size = sizeof(bool);
+        case BOOL:                      size = sizeof(bool);                    break;
         default : throw "WMML ERROR (in reader): unknown type id";
    }
    targetFile.seekp(static_cast<std::size_t>(targetFile.tellg()) + size);

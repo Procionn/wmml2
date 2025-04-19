@@ -84,25 +84,49 @@ using variant = std::variant<
 
 private:
 
-   std::fstream targetFile;
-   short unsigned int width_;
-   unsigned int height_;
-   char error_ = 0;
-   std::size_t end_;
+   std::fstream         targetFile;
+   short unsigned int   width_;
+   unsigned int         height_;
+   char                 error_ = 0;
+   std::size_t          end_;
 public:
    wmml(const std::filesystem::path& path);
+   // Opens an existing file.
+
    wmml(const std::filesystem::path& path, short unsigned width);
+   // Creates a new file.
+
    ~wmml();
-   unsigned height();
-   unsigned short width();
-   void write(std::vector<variant>& writeble);
-   bool read(std::vector<variant>& output);
+   // Closes the file and saves the settings.
+
+   unsigned         height();
+   // Returns the number of objects in the file.
+
+   unsigned short   width();
+   // Returns the number of fields in the object.
+
+   void             write(std::vector<variant>& writeble);
+   // Constructs an object from the elements in the provided vector and appends it to the file.
+   // The number of elements in the vector must match the file's width.
+
+   bool             read(std::vector<variant>& output);
+   // Reads an object from the file and stores it in the provided vector.
+   // The number of elements in the vector must match the file's width.
+
+   template<typename T>
+   void             overwriting_sector(int object_index, int sector_index, T& new_data) {
+                           overwriting(    object_index,     sector_index,    new_data);}
+   // A function that is strongly discouraged from use due to its instability.
+   // Overwrites a selected sector of an object. If the size or type of the new data
+   // does not match the existing one, an exception is thrown.
+   // The user assumes all responsibility for the safe use of this method.
+
 private:
-   bool skip();
-// char this_type(T& t);
-// auto caseTemplate ();
-// variant read_sector();
-// void write_sector (T& t);
+   bool             skip();
+// char     this_type(T& t);
+// auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
+// variant  read_sector();
+// void     write_sector (T& t);        / write_sector<std::string> (std::string& t)
 
 template <typename T>
 char this_type (T& t) {
@@ -175,7 +199,7 @@ variant read_sector() {
 
     case WMML:                      return read_sector_caseTemplate<wmml_marker>();
     case BOOL:                      return read_sector_caseTemplate<bool>();
-	default : throw "WMML ERROR (in reader): unknown type id";
+    default : throw "WMML ERROR (in reader): unknown type id";
    }
 }
 
@@ -187,6 +211,26 @@ void write_sector (T& t) {
    targetFile.write((&hash), sizeof(char));
    targetFile.write(reinterpret_cast<char*>(&t), sizeof(t));
 }
+
+
+
+
+template<typename T>
+void overwriting(int& object_index, int& sector_index, T& new_data) {
+    targetFile.seekp(sizeof(height_) + sizeof(width_));
+    --object_index;
+    std::size_t index = (object_index * width_) + sector_index;
+    for (--index; index != 0; --index)
+        if (!skip()) break;
+
+    char new_id = this_type(new_data);
+    unsigned char id = 0;
+    targetFile.read(reinterpret_cast<char*>(&id), sizeof(id));
+    if (new_id != id)
+        throw "WMML ERROR (in overwriting): the type of the old object does not match the new one";
+    targetFile.write(reinterpret_cast<char*>(&new_data), sizeof(new_data));
+}
+
 
 };   // wmml
 

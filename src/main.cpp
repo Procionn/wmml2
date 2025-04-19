@@ -7,9 +7,9 @@ int main()
 {
     try {
 
-#define MODE (0)
+#define MODE (1)
 #if MODE
-        wmml* lib = new wmml("file.wmml"/*, 5*/);
+        wmml* lib = new wmml("file.wmml");
         // print(lib->width());
         std::vector<wmml::variant> v(lib->width());
         signed int a        = 2090345;
@@ -25,19 +25,24 @@ int main()
 
         lib->write(v);
         delete lib;
-#elif TRUE
+// #elif TRUE
+        wmml* lb = new wmml("file.wmml");
+        int t = 2016;
+        lb->overwriting_sector(2, 2, t);
+        delete lb;
+
         wmml readed("file.wmml");
         std::vector<wmml::variant> r(readed.width());
         int tst = 0;
         // readed.read(r);
         while (readed.read(r)) {
             std::cout << "\n" << "reader cycle: " << tst << "\n" << std::endl;
-        for (auto& entry : r) {
-            std::visit([&](auto& parameter) {
-                use(parameter);
-            }, entry);
-        }
-        ++tst;
+            for (auto& entry : r) {
+                std::visit([&](auto& parameter) {
+                    use(parameter);
+                }, entry);
+            }
+            ++tst;
         }
 #endif
     } catch (const char *error_code) {
