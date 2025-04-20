@@ -83,12 +83,12 @@ using variant = std::variant<
 >;
 
 private:
-
-   std::fstream         targetFile;
-   short unsigned int   width_;
-   unsigned int         height_;
-   char                 error_ = 0;
-   std::size_t          end_;
+   std::filesystem::path file_path;
+   std::fstream          targetFile;
+   short unsigned int    width_;
+   unsigned int          height_;
+   std::size_t           end_;
+   char                  error_ = 0;
 public:
    wmml(const std::filesystem::path& path);
    // Opens an existing file.
@@ -113,6 +113,9 @@ public:
    // Reads an object from the file and stores it in the provided vector.
    // The number of elements in the vector must match the file's width.
 
+   void remove_object(int object_index);
+   // Deletes the specified field from the object. Keeps count from zero.
+
    template<typename T>
    void             overwriting_sector(int object_index, int sector_index, T& new_data) {
                            overwriting(    object_index,     sector_index,    new_data);}
@@ -120,9 +123,13 @@ public:
    // Overwrites a selected sector of an object. If the size or type of the new data
    // does not match the existing one, an exception is thrown.
    // The user assumes all responsibility for the safe use of this method.
+   // Overwrites the specified field of the selected object without changing its type and size.
+   // object_index and sector_index keeps count from zero.
 
 private:
-   bool             skip();
+   bool     skip();
+   void     seek(std::size_t t);
+   void     shift_data(const int& size, std::size_t& f_mark);
 // char     this_type(T& t);
 // auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
 // variant  read_sector();
@@ -220,10 +227,11 @@ void overwriting(int& object_index, int& sector_index, T& new_data) {
     if (sector_index > width_)
         throw "WMML ERROR: the field does not belong to the object";
     targetFile.seekp(sizeof(height_) + sizeof(width_));
-    --object_index;
+    // --object_index;
     std::size_t index = (object_index * width_) + sector_index;
-    for (--index; index != 0; --index)
-        if (!skip()) break;
+    for (/*--index*/; index != 0; --index)
+        if (!skip())
+            throw "WMML ERROR: the selected field does not belong to the file";
 
     char new_id = this_type(new_data);
     unsigned char id = 0;
@@ -231,6 +239,7 @@ void overwriting(int& object_index, int& sector_index, T& new_data) {
     targetFile.seekp(targetFile.tellg());
     if (new_id != id)
         throw "WMML ERROR (in overwriting): the type of the old object does not match the new one";
+
     targetFile.write(reinterpret_cast<char*>(&new_data), sizeof(new_data));
 }
 

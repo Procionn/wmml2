@@ -27,8 +27,9 @@ int main()
         delete lib;
 #elif TRUE
         wmml* lb = new wmml("file.wmml");
-        int t = 2016;
-        lb->overwriting_sector(2, 2, t);
+        lb->remove_object(2);
+        // int t = 213509;
+        // lb->overwriting_sector(1, 1, t);
         delete lb;
 
         wmml readed("file.wmml");

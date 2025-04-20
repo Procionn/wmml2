@@ -2,6 +2,7 @@
 
 wmml::wmml (const std::filesystem::path& path) {
    targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
+   file_path = path;
 
    if (!targetFile.is_open())
 	throw "WMML ERROR: the opened file does not exists!";
@@ -20,6 +21,7 @@ wmml::wmml (const std::filesystem::path& path, short unsigned width) {
    created_file.close();
 
    targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out);
+   file_path = path;
    if (!targetFile.is_open())
        throw " WMML ERROR: file is not open";
 
@@ -122,9 +124,20 @@ bool wmml::skip () {
         case BOOL:                      size = sizeof(bool);                    break;
         default : throw "WMML ERROR (in reader): unknown type id";
    }
-   targetFile.seekp(static_cast<std::size_t>(targetFile.tellg()) + size);
-   if (targetFile.eof()) return false;
+   seek(static_cast<std::size_t>(targetFile.tellg()) + size);
+   if (targetFile.eof())
+        return false;
    else return true;
+}
+
+
+void wmml::seek(std::size_t t) {
+#ifdef WIN32
+    targetFile.seekp(t);
+    targetFile.seekg(t);
+#elif __linux__
+    targetFile.seekp(t);
+#endif
 }
 
 
@@ -181,6 +194,45 @@ void wmml::write_sector<std::string> (std::string& t) {
             targetFile.write(reinterpret_cast<char*>(t.data()), size);
             }break;
     }
+}
+
+
+
+void wmml::shift_data (const int& size, std::size_t& f_mark) {
+    std::size_t s_mark;
+    char* buffer = new char[size];
+    targetFile.read(buffer, size);
+    s_mark = targetFile.tellg();
+    seek(f_mark);
+    targetFile.write(buffer, size);
+    seek(s_mark);
+    delete[] buffer;
+}
+
+
+
+void wmml::remove_object(int object_index) {
+    std::size_t index = (object_index * width_);
+    for (;index != 0; --index)
+        if (!skip())
+            throw "WMML ERROR: the specified object is outside the file boundary";
+    std::size_t f_mark = targetFile.tellg();
+    for (int i = width_; i != 0; --i)
+        if (!skip())
+            throw "WMML ERROR: the specified object is outside the file boundary";
+    std::size_t this_pos = targetFile.tellg();
+    std::size_t deleted_size = end_ - (this_pos - f_mark);
+
+    const int divisor = 1024;
+    std::size_t iterations_count = (end_ - this_pos) / divisor;
+
+    for (; iterations_count != 0; --iterations_count)
+        shift_data(divisor, f_mark);
+    int surplus_size = end_ - static_cast<std::size_t>(targetFile.tellg());
+    shift_data(surplus_size, f_mark);
+
+    std::filesystem::resize_file(file_path, deleted_size);
+    --height_;
 }
 
 
