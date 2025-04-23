@@ -10,10 +10,9 @@
 
 // namespace stc {
 
+class wmml_marker;
+struct wmml_archive_struct;
 
-
-class wmml_marker {
-};
 
 #ifndef NDEBUG
 template <typename T>
@@ -56,7 +55,8 @@ enum formats {
    LONG_DOUBLE,
 
    BOOL,
-   WMML
+   S_WMML,
+   E_WMML
 };
 
 public:
@@ -78,8 +78,7 @@ using variant = std::variant<
    float,
    double,
    long double,
-   bool,
-   wmml_marker
+   bool
 >;
 
 private:
@@ -89,6 +88,11 @@ private:
    unsigned int          height_;
    std::size_t           end_;
    char                  error_ = 0;
+
+   std::vector<wmml_archive_struct*> archived_files;
+   unsigned char version;
+   unsigned int archived_count;
+   unsigned long long start;
 public:
    wmml(const std::filesystem::path& path);
    // Opens an existing file.
@@ -113,6 +117,12 @@ public:
    // Reads an object from the file and stores it in the provided vector.
    // The number of elements in the vector must match the file's width.
 
+   void             set_wmml(wmml_marker* target);
+   // Записывает wmml архив в файл
+
+   wmml_marker* get_wmml();
+   // Считывает wmml архив из архива
+
    void remove_object(int object_index);
    // Deletes the specified field from the object. Keeps count from zero.
 
@@ -130,10 +140,14 @@ private:
    bool     skip();
    void     seek(std::size_t t);
    void     shift_data(const int& size, std::size_t& f_mark);
+   void     wmml_get();
 // char     this_type(T& t);
 // auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
 // variant  read_sector();
 // void     write_sector (T& t);        / write_sector<std::string> (std::string& t)
+   wmml() {}
+   friend class   wmml_marker;
+   friend struct wmml_archive_struct;
 
 template <typename T>
 char this_type (T& t) {
@@ -162,7 +176,6 @@ char this_type (T& t) {
    if constexpr (std::is_same<T, long double>::value)               return LONG_DOUBLE;
 
    if constexpr (std::is_same<T, bool>::value)                      return BOOL;
-   if constexpr (std::is_same<T, wmml_marker>::value)               return WMML;
 }
 
 
@@ -204,8 +217,9 @@ variant read_sector() {
     case DOUBLE:                    return read_sector_caseTemplate<double>();
     case LONG_DOUBLE:               return read_sector_caseTemplate<long double>();
 
-    case WMML:                      return read_sector_caseTemplate<wmml_marker>();
     case BOOL:                      return read_sector_caseTemplate<bool>();
+    case E_WMML:             error_ = 3;
+    case S_WMML:             error_ = 2;
     default : throw "WMML ERROR (in reader): unknown type id";
    }
 }
@@ -227,9 +241,8 @@ void overwriting(int& object_index, int& sector_index, T& new_data) {
     if (sector_index > width_)
         throw "WMML ERROR: the field does not belong to the object";
     targetFile.seekp(sizeof(height_) + sizeof(width_));
-    // --object_index;
     std::size_t index = (object_index * width_) + sector_index;
-    for (/*--index*/; index != 0; --index)
+    for (; index != 0; --index)
         if (!skip())
             throw "WMML ERROR: the selected field does not belong to the file";
 
@@ -248,5 +261,30 @@ void overwriting(int& object_index, int& sector_index, T& new_data) {
 
 template <>
 void wmml::write_sector<std::string> (std::string& t);
+
+
+
+
+
+class wmml_marker : public wmml {
+   friend class wmml;
+   unsigned long long f_mark = 0;
+public:
+   wmml_marker(wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark);
+   wmml_marker(std::filesystem::path& path);
+};
+
+
+
+
+
+struct wmml_archive_struct {
+   wmml_marker* open();
+   wmml_archive_struct(unsigned long long start, unsigned long long end, wmml* parent);
+private:
+   unsigned long long start;
+   unsigned long long end;
+   wmml* parent;
+};
 
 // }    // stc
