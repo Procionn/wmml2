@@ -284,43 +284,6 @@ void wmml::wmml_get () {
     } while(opened_archive_count != 0);
     archived_files.emplace_back(new wmml_archive_struct(f_mark, targetFile.tellg(), this));
     wmml_get();
-    // for (; opened_archive_count != 0;) {
-    //     skip();
-    //     switch (error_) {
-    //         case 0: throw "WMML ERROR: not found wmml!";
-    //         case 1: throw "WMML ERROR: file is end";
-    //         case 2: ++opened_archive_count; break;
-    //         case 3: --opened_archive_count;    break;
-    //     }
-    // }
-
-#if 0
-    int opened_arhcive = 0;
-    unsigned long long f_mark;
-
-    while (true) {
-        skip();
-        switch (error_) {
-            case 0:
-                if (opened_arhcive == 0) {
-#ifndef NDEBUG
-                    std::cout << "file not haved wmml archives" << std::endl;
-#endif
-                    return;
-                }
-                else continue;
-            case 1: throw "WMML ERROR: file is end";
-            case 2:
-                ++opened_arhcive;
-                if (opened_arhcive == 0)
-                    f_mark = targetFile.tellg();
-                break;
-            case 3: --opened_arhcive; break;
-        }
-        if (opened_arhcive == 0) break;
-    }
-    archived_files.emplace_back(new wmml_archive_struct(f_mark, targetFile.tellg(), this));
-#endif
 }
 
 
