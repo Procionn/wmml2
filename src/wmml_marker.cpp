@@ -5,8 +5,14 @@ wmml_marker::wmml_marker (wmml* parent, unsigned long long& f_mark, unsigned lon
    file_path = parent->file_path;
 
    this->f_mark = f_mark;
+   this->s_mark = s_mark;
 }
 
 wmml_marker::wmml_marker (std::filesystem::path& path) : wmml(path){
+
+}
+
+
+void wmml_marker::archiving (wmml* base) {
 
 }

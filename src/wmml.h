@@ -55,8 +55,8 @@ enum formats {
    LONG_DOUBLE,
 
    BOOL,
-   S_WMML,
-   E_WMML
+   S_WMML,      // start wmml
+   E_WMML       //  end  wmml
 };
 
 public:
@@ -268,10 +268,13 @@ void wmml::write_sector<std::string> (std::string& t);
 
 class wmml_marker : public wmml {
    friend class wmml;
-   unsigned long long f_mark = 0;
+   std::size_t f_mark;
+   std::size_t s_mark;
 public:
    wmml_marker(wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark);
    wmml_marker(std::filesystem::path& path);
+private:
+   void archiving (wmml* base);
 };
 
 

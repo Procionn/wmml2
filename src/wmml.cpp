@@ -251,6 +251,8 @@ void wmml::remove_object (int object_index) {
 
 void wmml::set_wmml (wmml_marker* target) {
 
+
+    delete target;
 }
 
 
