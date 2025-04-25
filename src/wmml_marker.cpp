@@ -16,3 +16,8 @@ wmml_marker::wmml_marker (std::filesystem::path& path) : wmml(path){
 void wmml_marker::archiving (wmml* base) {
 
 }
+
+
+std::size_t wmml_marker::size () {
+   return end_;
+}

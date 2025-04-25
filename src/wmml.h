@@ -275,6 +275,7 @@ public:
    wmml_marker(std::filesystem::path& path);
 private:
    void archiving (wmml* base);
+   std::size_t size();
 };
 
 

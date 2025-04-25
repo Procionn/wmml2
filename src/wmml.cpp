@@ -15,6 +15,7 @@ wmml::wmml (const std::filesystem::path& path) {
     targetFile.read(reinterpret_cast<char*>(&archived_count), sizeof(archived_count));
     if (archived_count != 0)
         wmml_get();
+    start = targetFile.tellg();
    }
 }
 
@@ -37,6 +38,7 @@ wmml::wmml (const std::filesystem::path& path, short unsigned width) {
    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
    targetFile.write(reinterpret_cast<char*>(&archived_count), sizeof(archived_count));
    end_ = targetFile.tellp();
+   start = targetFile.tellg();
 }
 
 wmml::~wmml () {
@@ -223,6 +225,7 @@ void wmml::shift_data (const int& size, std::size_t& f_mark) {
 
 
 
+
 void wmml::remove_object (int object_index) {
     std::size_t index = (object_index * width_);
     for (;index != 0; --index)
@@ -250,7 +253,29 @@ void wmml::remove_object (int object_index) {
 
 
 void wmml::set_wmml (wmml_marker* target) {
+    const int divisor = 1024;
+    // const int d_divisor = 2048; // doubled divisor
+    std::size_t newFileSize = target->size();
+    std::size_t newEnd = end_ + newFileSize;
+    std::filesystem::resize_file(file_path, newEnd);
 
+    std::size_t iterations_count = newFileSize / divisor;
+
+    std::size_t f_mark = newEnd - 1024;
+    std::size_t s_mark = end_ - 1024;
+    for (--iterations_count; iterations_count != 0; --iterations_count) {
+        seek(s_mark);
+        shift_data(divisor, f_mark);
+        s_mark = s_mark - divisor;
+        f_mark = f_mark - divisor;
+    }
+    seek(s_mark);
+    shift_data(divisor, f_mark);
+    int surplus_size = static_cast<int>(targetFile.tellg()) - end_;
+    s_mark = s_mark - surplus_size;
+    f_mark = f_mark - surplus_size;
+    seek(s_mark);
+    shift_data(divisor, f_mark);
 
     delete target;
 }
