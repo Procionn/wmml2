@@ -90,9 +90,10 @@ private:
    char                  error_ = 0;
 
    std::vector<wmml_archive_struct*> archived_files;
-   unsigned char version;
+   unsigned char version = 2;
    unsigned int archived_count;
    unsigned long long start;
+   static constexpr int divisor = 4096;
 public:
    wmml(const std::filesystem::path& path);
    // Opens an existing file.
@@ -146,7 +147,7 @@ private:
 // variant  read_sector();
 // void     write_sector (T& t);        / write_sector<std::string> (std::string& t)
    wmml() {}
-   friend class   wmml_marker;
+   friend class  wmml_marker;
    friend struct wmml_archive_struct;
 
 template <typename T>
@@ -240,7 +241,7 @@ template<typename T>
 void overwriting(int& object_index, int& sector_index, T& new_data) {
     if (sector_index > width_)
         throw "WMML ERROR: the field does not belong to the object";
-    targetFile.seekp(sizeof(height_) + sizeof(width_));
+    targetFile.seekp(start);
     std::size_t index = (object_index * width_) + sector_index;
     for (; index != 0; --index)
         if (!skip())

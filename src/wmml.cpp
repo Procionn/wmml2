@@ -8,11 +8,16 @@ wmml::wmml (const std::filesystem::path& path) {
 	throw "WMML ERROR: the opened file does not exists!";
    else {
     end_ = targetFile.tellp();
-    targetFile.seekp(0);
+    seek(0);
     targetFile.read(reinterpret_cast<char*>(&version), sizeof(version));
-    targetFile.read(reinterpret_cast<char*>(&width_), sizeof(short unsigned int));
-    targetFile.read(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
+    targetFile.read(reinterpret_cast<char*>(&width_), sizeof(width_));
+    targetFile.read(reinterpret_cast<char*>(&height_), sizeof(height_));
     targetFile.read(reinterpret_cast<char*>(&archived_count), sizeof(archived_count));
+#ifdef WIN32
+    targetFile.seekp(targetFile.tellg());
+#elif __linux__
+
+#endif
     if (archived_count != 0)
         wmml_get();
     start = targetFile.tellg();
@@ -34,16 +39,16 @@ wmml::wmml (const std::filesystem::path& path, short unsigned width) {
    width_ = width;
    archived_count = 0;
    targetFile.write(reinterpret_cast<char*>(&version), sizeof(version));
-   targetFile.write(reinterpret_cast<char*>(&width_), sizeof(unsigned short int));
-   targetFile.write(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
+   targetFile.write(reinterpret_cast<char*>(&width_), sizeof(width_));
+   targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
    targetFile.write(reinterpret_cast<char*>(&archived_count), sizeof(archived_count));
    end_ = targetFile.tellp();
    start = targetFile.tellg();
 }
 
 wmml::~wmml () {
-   targetFile.seekp(sizeof(unsigned short int));
-   targetFile.write(reinterpret_cast<char*>(&height_), sizeof(unsigned int));
+   targetFile.seekp(sizeof(version) + sizeof(width_));
+   targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
    targetFile.close();
 }
 
@@ -213,14 +218,20 @@ void wmml::write_sector<std::string> (std::string& t) {
 
 
 void wmml::shift_data (const int& size, std::size_t& f_mark) {
-    std::size_t s_mark;
-    char* buffer = new char[size];
+    if (size >= divisor)
+        throw "WMML debug ERROR: the buffer does not fit on the stack";
+    char buffer[divisor];
+#if 1
     targetFile.read(buffer, size);
-    s_mark = targetFile.tellg();
+    std::size_t s_mark = targetFile.tellg();
     seek(f_mark);
     targetFile.write(buffer, size);
     seek(s_mark);
-    delete[] buffer;
+#elif 1
+    targetFile.read(buffer, size);
+    seek(f_mark);
+    targetFile.write(buffer, size);
+#endif
 }
 
 
@@ -238,7 +249,6 @@ void wmml::remove_object (int object_index) {
     std::size_t this_pos = targetFile.tellg();
     std::size_t deleted_size = end_ - (this_pos - f_mark);
 
-    const int divisor = 1024;
     std::size_t iterations_count = (end_ - this_pos) / divisor;
 
     for (; iterations_count != 0; --iterations_count)
@@ -253,16 +263,14 @@ void wmml::remove_object (int object_index) {
 
 
 void wmml::set_wmml (wmml_marker* target) {
-    const int divisor = 1024;
-    // const int d_divisor = 2048; // doubled divisor
-    std::size_t newFileSize = target->size();
+    std::size_t newFileSize = target->size() + 2; // 2 - the size of the markers located on the borders of the archived file
     std::size_t newEnd = end_ + newFileSize;
     std::filesystem::resize_file(file_path, newEnd);
 
     std::size_t iterations_count = newFileSize / divisor;
 
-    std::size_t f_mark = newEnd - 1024;
-    std::size_t s_mark = end_ - 1024;
+    std::size_t f_mark = newEnd - divisor;
+    std::size_t s_mark = end_ - divisor;
     for (--iterations_count; iterations_count != 0; --iterations_count) {
         seek(s_mark);
         shift_data(divisor, f_mark);
@@ -271,11 +279,35 @@ void wmml::set_wmml (wmml_marker* target) {
     }
     seek(s_mark);
     shift_data(divisor, f_mark);
+
     int surplus_size = static_cast<int>(targetFile.tellg()) - end_;
+    // int surplus_size = newFileSize % divisor;
     s_mark = s_mark - surplus_size;
     f_mark = f_mark - surplus_size;
     seek(s_mark);
     shift_data(divisor, f_mark);
+
+
+
+    iterations_count = newFileSize / divisor;
+    seek(start);
+    target->seek(0);
+
+    unsigned char id = S_WMML;
+    targetFile.write(reinterpret_cast<char*>(&id), sizeof(id));
+    for (; iterations_count != 0; --iterations_count) {
+        char buffer[divisor];
+        target->targetFile.read(buffer, divisor);
+        targetFile.write(buffer, divisor);
+    }
+
+    surplus_size = newFileSize % divisor;
+    char buffer[divisor];
+    target->targetFile.read(buffer, surplus_size);
+    targetFile.write(buffer, surplus_size);
+
+    id = E_WMML;
+    targetFile.write(reinterpret_cast<char*>(&id), sizeof(id));
 
     delete target;
 }

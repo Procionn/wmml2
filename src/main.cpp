@@ -1,5 +1,4 @@
 #include <iostream>
-#define TRUE (1)
 
 #include "wmml.h"
 
@@ -7,9 +6,9 @@ int main()
 {
     try {
 
-#define MODE (1)
+#define MODE (0)
 #if MODE
-        wmml* lib = new wmml("file.wmml", 5);
+        wmml* lib = new wmml("file.wmml");
         // print(lib->width());
         std::vector<wmml::variant> v(lib->width());
         signed int a        = 2090345;
@@ -25,7 +24,7 @@ int main()
 
         lib->write(v);
         delete lib;
-#elif TRUE
+#elif 1
         wmml* lb = new wmml("file.wmml");
         lb->remove_object(2);
         // int t = 213509;
