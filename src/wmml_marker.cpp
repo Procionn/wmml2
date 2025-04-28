@@ -8,8 +8,9 @@ wmml_marker::wmml_marker (wmml* parent, unsigned long long& f_mark, unsigned lon
    this->s_mark = s_mark;
 }
 
-wmml_marker::wmml_marker (std::filesystem::path& path) : wmml(path){
-
+wmml_marker::wmml_marker (const std::filesystem::path& path) : wmml(path){
+    f_mark = 0;
+    s_mark = 0;
 }
 
 

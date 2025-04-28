@@ -91,9 +91,10 @@ private:
 
    std::vector<wmml_archive_struct*> archived_files;
    unsigned char version = 2;
-   unsigned int archived_count;
+   unsigned int archivedCount;
    unsigned long long start;
-   static constexpr int divisor = 4096;
+  static constexpr int divisor = 4096;
+// #define divisor 4096
 public:
    wmml(const std::filesystem::path& path);
    // Opens an existing file.
@@ -119,10 +120,10 @@ public:
    // The number of elements in the vector must match the file's width.
 
    void             set_wmml(wmml_marker* target);
-   // Записывает wmml архив в файл
+   // Writes a wmml archive to a file
 
    wmml_marker* get_wmml();
-   // Считывает wmml архив из архива
+   // Reads a wmml archive from an archive
 
    void remove_object(int object_index);
    // Deletes the specified field from the object. Keeps count from zero.
@@ -140,7 +141,7 @@ public:
 private:
    bool     skip();
    void     seek(std::size_t t);
-   void     shift_data(const int& size, std::size_t& f_mark);
+   void     shift_data(const int& size, const std::size_t& f_mark);
    void     wmml_get();
 // char     this_type(T& t);
 // auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
@@ -273,7 +274,7 @@ class wmml_marker : public wmml {
    std::size_t s_mark;
 public:
    wmml_marker(wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark);
-   wmml_marker(std::filesystem::path& path);
+   wmml_marker(const std::filesystem::path& path);
 private:
    void archiving (wmml* base);
    std::size_t size();

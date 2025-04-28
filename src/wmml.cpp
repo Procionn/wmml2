@@ -12,13 +12,13 @@ wmml::wmml (const std::filesystem::path& path) {
     targetFile.read(reinterpret_cast<char*>(&version), sizeof(version));
     targetFile.read(reinterpret_cast<char*>(&width_), sizeof(width_));
     targetFile.read(reinterpret_cast<char*>(&height_), sizeof(height_));
-    targetFile.read(reinterpret_cast<char*>(&archived_count), sizeof(archived_count));
+    targetFile.read(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
 #ifdef WIN32
     targetFile.seekp(targetFile.tellg());
 #elif __linux__
 
 #endif
-    if (archived_count != 0)
+    if (archivedCount != 0)
         wmml_get();
     start = targetFile.tellg();
    }
@@ -37,11 +37,11 @@ wmml::wmml (const std::filesystem::path& path, short unsigned width) {
 
    height_ = 0;
    width_ = width;
-   archived_count = 0;
+   archivedCount = 0;
    targetFile.write(reinterpret_cast<char*>(&version), sizeof(version));
    targetFile.write(reinterpret_cast<char*>(&width_), sizeof(width_));
    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
-   targetFile.write(reinterpret_cast<char*>(&archived_count), sizeof(archived_count));
+   targetFile.write(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
    end_ = targetFile.tellp();
    start = targetFile.tellg();
 }
@@ -49,6 +49,7 @@ wmml::wmml (const std::filesystem::path& path, short unsigned width) {
 wmml::~wmml () {
    targetFile.seekp(sizeof(version) + sizeof(width_));
    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
+   targetFile.write(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
    targetFile.close();
 }
 
@@ -217,21 +218,15 @@ void wmml::write_sector<std::string> (std::string& t) {
 
 
 
-void wmml::shift_data (const int& size, std::size_t& f_mark) {
-    if (size >= divisor)
+void wmml::shift_data (const int& size, const std::size_t& f_mark) {
+    if (size > divisor)
         throw "WMML debug ERROR: the buffer does not fit on the stack";
     char buffer[divisor];
-#if 1
     targetFile.read(buffer, size);
     std::size_t s_mark = targetFile.tellg();
     seek(f_mark);
     targetFile.write(buffer, size);
     seek(s_mark);
-#elif 1
-    targetFile.read(buffer, size);
-    seek(f_mark);
-    targetFile.write(buffer, size);
-#endif
 }
 
 
@@ -249,9 +244,9 @@ void wmml::remove_object (int object_index) {
     std::size_t this_pos = targetFile.tellg();
     std::size_t deleted_size = end_ - (this_pos - f_mark);
 
-    std::size_t iterations_count = (end_ - this_pos) / divisor;
+    std::size_t iterationsCount = (end_ - this_pos) / divisor;
 
-    for (; iterations_count != 0; --iterations_count)
+    for (; iterationsCount != 0; --iterationsCount)
         shift_data(divisor, f_mark);
     int surplus_size = end_ - static_cast<std::size_t>(targetFile.tellg());
     shift_data(surplus_size, f_mark);
@@ -263,60 +258,59 @@ void wmml::remove_object (int object_index) {
 
 
 void wmml::set_wmml (wmml_marker* target) {
-    std::size_t newFileSize = target->size() + 2; // 2 - the size of the markers located on the borders of the archived file
-    std::size_t newEnd = end_ + newFileSize;
+    std::size_t newFileSize = target->size();
+    std::size_t newEnd = end_ + newFileSize + 2; // 2 - the size of the markers located on the borders of the archived file
     std::filesystem::resize_file(file_path, newEnd);
 
-    std::size_t iterations_count = newFileSize / divisor;
+    std::size_t fileDataSize = end_ - start;
+    std::size_t iterationsCount = fileDataSize / divisor;
+    unsigned int surplusSize = fileDataSize % divisor;
 
-    std::size_t f_mark = newEnd - divisor;
-    std::size_t s_mark = end_ - divisor;
-    for (--iterations_count; iterations_count != 0; --iterations_count) {
-        seek(s_mark);
-        shift_data(divisor, f_mark);
-        s_mark = s_mark - divisor;
-        f_mark = f_mark - divisor;
+    std::size_t f_mark = newEnd;
+    std::size_t s_mark = end_;
+    if (iterationsCount > 0 ) {
+        for (; iterationsCount != 0; --iterationsCount) {
+            f_mark -= divisor;
+            s_mark -= divisor;
+            seek(s_mark);
+            shift_data(divisor, f_mark);
+        }
     }
+    f_mark -=surplusSize;
+    s_mark -=surplusSize;
     seek(s_mark);
-    shift_data(divisor, f_mark);
+    shift_data(surplusSize, f_mark);
 
-    int surplus_size = static_cast<int>(targetFile.tellg()) - end_;
-    // int surplus_size = newFileSize % divisor;
-    s_mark = s_mark - surplus_size;
-    f_mark = f_mark - surplus_size;
-    seek(s_mark);
-    shift_data(divisor, f_mark);
-
-
-
-    iterations_count = newFileSize / divisor;
-    seek(start);
-    target->seek(0);
 
     unsigned char id = S_WMML;
+    seek(start);
     targetFile.write(reinterpret_cast<char*>(&id), sizeof(id));
-    for (; iterations_count != 0; --iterations_count) {
-        char buffer[divisor];
+
+    iterationsCount = newFileSize / divisor;
+    surplusSize = newFileSize % divisor;
+
+    char buffer[divisor];
+    target->seek(0);
+    for  (;iterationsCount != 0; --iterationsCount) {
         target->targetFile.read(buffer, divisor);
         targetFile.write(buffer, divisor);
     }
-
-    surplus_size = newFileSize % divisor;
-    char buffer[divisor];
-    target->targetFile.read(buffer, surplus_size);
-    targetFile.write(buffer, surplus_size);
+    target->targetFile.read(buffer, surplusSize);
+    targetFile.write(buffer, surplusSize);
 
     id = E_WMML;
     targetFile.write(reinterpret_cast<char*>(&id), sizeof(id));
 
+
+    ++archivedCount;
     delete target;
 }
 
 
 
 wmml_marker* wmml::get_wmml () {
-    auto marker = archived_files[archived_count]->open();
-    --archived_count;
+    auto marker = archived_files[archivedCount]->open();
+    --archivedCount;
     return marker;
 }
 
@@ -328,6 +322,7 @@ void wmml::wmml_get () {
     bool triger = true;
     do {
         skip();
+        std::cout << static_cast<int>(error_) << std::endl;
         switch (error_) {
             case 0: throw "WMML ERROR: not found wmml!";
             case 1: throw "WMML ERROR: file is end";
