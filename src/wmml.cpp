@@ -1,32 +1,31 @@
 #include "wmml.h"
 
 wmml::wmml (const std::filesystem::path& path) {
-   targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
-   file_path = path;
+    targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
+    file_path = path;
 
-   if (!targetFile.is_open())
-	throw "WMML ERROR: the opened file does not exists!";
-   else {
-    end_ = targetFile.tellp();
-    seek(0);
-    targetFile.read(reinterpret_cast<char*>(&version), sizeof(version));
-    targetFile.read(reinterpret_cast<char*>(&width_), sizeof(width_));
-    targetFile.read(reinterpret_cast<char*>(&height_), sizeof(height_));
-    targetFile.read(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
+    if (!targetFile.is_open())
+        throw "WMML ERROR: the opened file does not exists!";
+    else {
+        end_ = targetFile.tellp();
+        seek(0);
+        targetFile.read(reinterpret_cast<char*>(&version), sizeof(version));
+        targetFile.read(reinterpret_cast<char*>(&width_), sizeof(width_));
+        targetFile.read(reinterpret_cast<char*>(&height_), sizeof(height_));
+        targetFile.read(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
 #ifdef WIN32
-    targetFile.seekp(targetFile.tellg());
-#elif __linux__
-
+        targetFile.seekp(targetFile.tellg());
 #endif
-    if (archivedCount != 0)
-        wmml_get();
-    start = targetFile.tellg();
-   }
+        localArchiveCount = archivedCount;
+        if (archivedCount != 0)
+            wmml_get();
+        start = targetFile.tellg();
+    }
 }
 
 wmml::wmml (const std::filesystem::path& path, short unsigned width) {
    if (std::filesystem::exists(path))
-	throw "WMML ERROR: you are trying to create an existing file";
+    throw "WMML ERROR: you are trying to create an existing file";
    std::ofstream created_file(path, std::ios::binary);
    created_file.close();
 
@@ -81,18 +80,18 @@ void wmml::write (std::vector<variant>& writeble) {
 
 
 bool wmml::read(std::vector<variant>& output) {
-   if (width_ != output.size())
+    if (width_ != output.size())
         throw "WMML ERROR: The size of the container does not match the file width_";
-   for (int i = 0, size = width_; i != size; ++i) {
+    for (int i = 0; i != width_; ++i) {
         output[i] = read_sector();
         switch(error_) {
-         case 0: continue;
-         case 1: return false;
-         case 2:
-         case 3: throw "WMML debug error: reader came across the markup of the wmml archive sector";
+            case 0: continue;
+            case 1: return false;
+            case 2:
+            case 3: throw "WMML debug error: reader came across the markup of the wmml archive sector";
         }
-   }
-   return true;
+    }
+    return true;
 }
 
 
@@ -104,11 +103,7 @@ bool wmml::skip () {
    std::size_t size = 0;
    targetFile.read(&id, sizeof(id));
    switch (id) {
-#ifndef NDEBUG
-        case 0:                         std::cout << false << std::endl; return false;
-#elif 1
         case 0:                         return false;
-#endif
         case INT:                       size = sizeof(int);                     break;
         case UNSIGNED_INT:              size = sizeof(unsigned int);            break;
         case LONG_INT:                  size = sizeof(long int);                break;
@@ -319,27 +314,29 @@ wmml_marker* wmml::get_wmml () {
 void wmml::wmml_get () {
     int opened_archive_count = 0;
     unsigned long long f_mark;
-    bool triger = true;
-    do {
-        skip();
-        std::cout << static_cast<int>(error_) << std::endl;
-        switch (error_) {
-            case 0: throw "WMML ERROR: not found wmml!";
-            case 1: throw "WMML ERROR: file is end";
-            case 2:
-                ++opened_archive_count;
-                if (triger) {
-                    triger = false;
-                    f_mark = targetFile.tellg();
+    skip();
+    switch (error_) {
+        case 1: throw "WMML ERROR: file is end";
+        case 2:
+            f_mark = targetFile.tellg();
+            ++opened_archive_count;
+            while (opened_archive_count != 0) {
+                skip();
+                switch (error_) {
+                    case 0: continue;
+                    case 1: throw "WMML ERROR: file is end";
+                    case 2: ++opened_archive_count; break;
+                    case 3: --opened_archive_count; break;
                 }
-                break;
-            case 3: --opened_archive_count;    break;
-        }
-    } while(opened_archive_count != 0);
+            }
+            break;
+        default: throw "WMML ERROR: not found wmml!";
+    }
     archived_files.emplace_back(new wmml_archive_struct(f_mark, targetFile.tellg(), this));
-    wmml_get();
+    --localArchiveCount;
+    if (localArchiveCount != 0)
+        wmml_get();
 }
-
 
 
 

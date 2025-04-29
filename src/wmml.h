@@ -92,6 +92,7 @@ private:
    std::vector<wmml_archive_struct*> archived_files;
    unsigned char version = 2;
    unsigned int archivedCount;
+   unsigned int localArchiveCount;
    unsigned long long start;
   static constexpr int divisor = 4096;
 // #define divisor 4096
@@ -193,37 +194,38 @@ std::string read_sector_caseString (char type);
 
 
 variant read_sector() {
-   error_ = 0;
-   unsigned char id = 0;
-   targetFile.read(reinterpret_cast<char*>(&id), sizeof(id));
-   switch (id) {
-    case 0:                         error_ = 1;
-    case INT:                       return read_sector_caseTemplate<int>();
-    case UNSIGNED_INT:              return read_sector_caseTemplate<unsigned int>();
-    case LONG_INT:                  return read_sector_caseTemplate<long int>();
-    case UNSIGNED_LONG_INT:         return read_sector_caseTemplate<unsigned long int>();
-    case LONG_LONG_INT:             return read_sector_caseTemplate<long long int>();
-    case UNSIGNED_LONG_LONG_INT:	return read_sector_caseTemplate<unsigned long long int>();
-    case SHORT_INT:                 return read_sector_caseTemplate<short int>();
-    case UNSIGNED_SHORT_INT:        return read_sector_caseTemplate<unsigned short int>();
+    error_ = 0;
+    unsigned char id = 0;
+    targetFile.read(reinterpret_cast<char*>(&id), sizeof(id));
+    switch (id) {
+        case 0:                         error_ = 1; break;
+        case INT:                       return read_sector_caseTemplate<int>();
+        case UNSIGNED_INT:              return read_sector_caseTemplate<unsigned int>();
+        case LONG_INT:                  return read_sector_caseTemplate<long int>();
+        case UNSIGNED_LONG_INT:         return read_sector_caseTemplate<unsigned long int>();
+        case LONG_LONG_INT:             return read_sector_caseTemplate<long long int>();
+        case UNSIGNED_LONG_LONG_INT:	return read_sector_caseTemplate<unsigned long long int>();
+        case SHORT_INT:                 return read_sector_caseTemplate<short int>();
+        case UNSIGNED_SHORT_INT:        return read_sector_caseTemplate<unsigned short int>();
 
-    case CHAR:                      return read_sector_caseTemplate<char>();
-    case SIGNED_CHAR:               return read_sector_caseTemplate<signed char>();
-    case UNSIGNED_CHAR:             return read_sector_caseTemplate<unsigned char>();
-    case WCHAR_T:                   return read_sector_caseTemplate<wchar_t>();
-    case STRING:                    return read_sector_caseString(1);
-    case STRING64K:                 return read_sector_caseString(2);
-    case STRING1KK:                 return read_sector_caseString(3);
+        case CHAR:                      return read_sector_caseTemplate<char>();
+        case SIGNED_CHAR:               return read_sector_caseTemplate<signed char>();
+        case UNSIGNED_CHAR:             return read_sector_caseTemplate<unsigned char>();
+        case WCHAR_T:                   return read_sector_caseTemplate<wchar_t>();
+        case STRING:                    return read_sector_caseString(1);
+        case STRING64K:                 return read_sector_caseString(2);
+        case STRING1KK:                 return read_sector_caseString(3);
 
-    case FLOAT:                     return read_sector_caseTemplate<float>();
-    case DOUBLE:                    return read_sector_caseTemplate<double>();
-    case LONG_DOUBLE:               return read_sector_caseTemplate<long double>();
+        case FLOAT:                     return read_sector_caseTemplate<float>();
+        case DOUBLE:                    return read_sector_caseTemplate<double>();
+        case LONG_DOUBLE:               return read_sector_caseTemplate<long double>();
 
-    case BOOL:                      return read_sector_caseTemplate<bool>();
-    case E_WMML:             error_ = 3;
-    case S_WMML:             error_ = 2;
-    default : throw "WMML ERROR (in reader): unknown type id";
-   }
+        case BOOL:                      return read_sector_caseTemplate<bool>();
+        case E_WMML:                    error_ = 3; break;
+        case S_WMML:                    error_ = 2; break;
+        default : throw "WMML ERROR (in reader): unknown type id";
+    }
+    return NULL;
 }
 
 
@@ -275,8 +277,8 @@ class wmml_marker : public wmml {
 public:
    wmml_marker(wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark);
    wmml_marker(const std::filesystem::path& path);
+   void unarchiving (wmml* base);
 private:
-   void archiving (wmml* base);
    std::size_t size();
 };
 

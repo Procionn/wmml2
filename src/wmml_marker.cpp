@@ -14,7 +14,7 @@ wmml_marker::wmml_marker (const std::filesystem::path& path) : wmml(path){
 }
 
 
-void wmml_marker::archiving (wmml* base) {
+void wmml_marker::unarchiving (wmml* base) {
 
 }
 

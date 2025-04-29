@@ -57,6 +57,7 @@ int main()
             }
             ++tst;
         }
+        auto archived = readed.get_wmml();
 #endif
     } catch (const char *error_code) {
         std::cerr << error_code << std::endl;
