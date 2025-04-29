@@ -278,6 +278,8 @@ public:
    wmml_marker(wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark);
    wmml_marker(const std::filesystem::path& path);
    void unarchiving (wmml* base);
+   bool read(std::vector<variant>& output);
+   void write();
 private:
    std::size_t size();
 };
