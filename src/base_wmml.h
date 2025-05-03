@@ -4,6 +4,23 @@
 #include <fstream>
 #include <vector>
 
+class wmml;
+class wmml_marker;
+class base_wmml;
+
+struct wmml_archive_struct {
+    wmml_marker* open();
+    wmml_archive_struct(unsigned long long start, unsigned long long end, base_wmml* parent);
+private:
+    unsigned long long start;
+    unsigned long long end;
+    base_wmml* parent;
+};
+
+
+
+
+
 class base_wmml
 {
 protected:
@@ -65,6 +82,7 @@ protected:
     std::size_t           end_;
     char                  error_ = 0;
 
+    std::vector<wmml_archive_struct*> archived_files;
     unsigned char         version = 2;
     unsigned int          archivedCount;
     unsigned int          localArchiveCount;
@@ -82,6 +100,7 @@ protected:
     bool     skip();
     void     seek(std::size_t t);
     void     shift_data(const int& size, const std::size_t& f_mark);
+    void     wmml_get();
     // char     this_type(T& t);
     // auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
     // variant  read_sector();

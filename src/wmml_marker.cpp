@@ -20,15 +20,12 @@ wmml_marker::wmml_marker (wmml* parent, unsigned long long& f_mark, unsigned lon
      start = targetFile.tellg();
 }
 
-wmml_marker::wmml_marker (const std::filesystem::path& path) : wmml(path) {
+wmml_marker::wmml_marker (const std::filesystem::path& path) {
    parent = nullptr;
     f_mark = 0;
     s_mark = 0;
 }
 
-wmml_marker::~wmml_marker () {
-
-}
 
 
 void wmml_marker::unarchiving (const std::filesystem::path& unarchivedFilePath) {
@@ -58,22 +55,14 @@ void wmml_marker::unarchiving (const std::filesystem::path& unarchivedFilePath) 
 }
 
 
-std::size_t wmml_marker::size () {
-   return end_;
-}
-
-
-void wmml_marker::write () {
-   throw "WMML ERROR: archived file is read only";
-}
-
 
 bool wmml_marker::read (std::vector<variant>& output) {
     if (width_ != output.size())
         throw "WMML ERROR: The size of the container does not match the file width_";
     for (int i = 0; i != width_; ++i) {
-       if (targetFile.tellg() < s_mark)
+       if (targetFile.tellg() >= s_mark)
           return false;
+       std::cout << "this pos:" << targetFile.tellg() << "\n";
         output[i] = read_sector();
         switch(error_) {
             case 0: continue;

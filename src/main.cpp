@@ -57,15 +57,15 @@ int main()
             }
             ++tst;
         }
-        std::filesystem::remove("unarchived.wmml");
         auto archived = readed.get_wmml();
         std::vector<wmml::variant> v(archived->width());
-        // archived->read(v);
-        // for (auto& entry : r) {
-        //     std::visit([&](auto& parameter) {
-        //         use(parameter);
-        //     }, entry);
-        // }
+        archived->read(v);
+        std::cout << "\n";
+        for (auto& entry : v) {
+            std::visit([&](auto& parameter) {
+                use(parameter);
+            }, entry);
+        }
         // archived->unarchiving("unarchived.wmml");
         delete archived;
 #endif
