@@ -274,10 +274,11 @@ class wmml_marker : public wmml {
    friend class wmml;
    std::size_t f_mark;
    std::size_t s_mark;
+   wmml* parent;
 public:
    wmml_marker(wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark);
    wmml_marker(const std::filesystem::path& path);
-   void unarchiving (wmml* base);
+   void unarchiving (std::filesystem::path unarchivedFilePath);
    bool read(std::vector<variant>& output);
    void write();
 private:
