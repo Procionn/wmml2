@@ -1,5 +1,4 @@
 #include <iostream>
-#define TRUE (1)
 
 #include "wmml.h"
 
@@ -9,6 +8,7 @@ int main()
 
 #define MODE (0)
 #if MODE
+        // wmml* lib = new wmml("file.wmml", 5);
         wmml* lib = new wmml("file.wmml");
         // print(lib->width());
         std::vector<wmml::variant> v(lib->width());
@@ -23,19 +23,31 @@ int main()
         v[3] = d;
         v[4] = e;
 
+        // signed int a        = 436454743;
+        // float b             = 12.3;
+        // unsigned short c    = 55405;
+        // long long int d     = 5654654654164585;
+        // v[0] = a;
+        // v[1] = b;
+        // v[2] = c;
+        // v[3] = d;
+
+
         lib->write(v);
         delete lib;
-#elif TRUE
-        wmml* lb = new wmml("file.wmml");
-        lb->remove_object(2);
+#elif 1
+        // wmml* lb = new wmml("file.wmml");
+        // lb->remove_object(2);
         // int t = 213509;
         // lb->overwriting_sector(1, 1, t);
-        delete lb;
+        // wmml_marker* nwm = new wmml_marker("file2.wmml");
+
+        // lb->set_wmml(nwm);
+        // delete lb;
 
         wmml readed("file.wmml");
         std::vector<wmml::variant> r(readed.width());
         int tst = 0;
-        // readed.read(r);
         while (readed.read(r)) {
             std::cout << "\n" << "reader cycle: " << tst << "\n" << std::endl;
             for (auto& entry : r) {
@@ -45,6 +57,17 @@ int main()
             }
             ++tst;
         }
+        auto archived = readed.get_wmml();
+        std::vector<wmml::variant> v(archived->width());
+        archived->read(v);
+        std::cout << "\n";
+        for (auto& entry : v) {
+            std::visit([&](auto& parameter) {
+                use(parameter);
+            }, entry);
+        }
+        // archived->unarchiving("unarchived.wmml");
+        delete archived;
 #endif
     } catch (const char *error_code) {
         std::cerr << error_code << std::endl;
