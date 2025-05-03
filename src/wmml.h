@@ -1,9 +1,5 @@
 #pragma once
-#include <filesystem>
-#include <fstream>
-#include <vector>
 #include <iostream>
-#include <variant>
 #ifndef NDEBUG
 #include <typeinfo>
 #endif
@@ -30,9 +26,9 @@ void use<wmml_marker>(wmml_marker t);
 
 
 
-class wmml
+class wmml : public base_wmml
 {
-
+#if 0
 enum formats {
    INT = 1,
    UNSIGNED_INT,
@@ -59,7 +55,6 @@ enum formats {
    S_WMML,      // start wmml
    E_WMML       //  end  wmml
 };
-
 public:
 
 using variant = std::variant<
@@ -81,22 +76,23 @@ using variant = std::variant<
    long double,
    bool
 >;
+#endif
 
 private:
-   std::filesystem::path file_path;
-   std::fstream          targetFile;
-   short unsigned int    width_;
-   unsigned int          height_;
-   std::size_t           end_;
-   char                  error_ = 0;
+    // std::filesystem::path file_path;
+    // std::fstream          targetFile;
+    // short unsigned int    width_;
+    // unsigned int          height_;
+    // std::size_t           end_;
+    // char                  error_ = 0;
 
-   std::vector<wmml_archive_struct*> archived_files;
-   unsigned char version = 2;
-   unsigned int archivedCount;
-   unsigned int localArchiveCount;
-   unsigned long long start;
-  static constexpr int divisor = 4096;
-// #define divisor 4096
+    std::vector<wmml_archive_struct*> archived_files;
+    //  unsigned char version = 2;
+    //  unsigned int archivedCount;
+    //  unsigned int localArchiveCount;
+    //  unsigned long long start;
+    // static constexpr int divisor = 4096;
+    // #define divisor 4096
 public:
    wmml(const std::filesystem::path& path);
    // Opens an existing file.
@@ -106,13 +102,13 @@ public:
 
    ~wmml();
    // Closes the file and saves the settings.
-
+#if 0
    unsigned         height();
    // Returns the number of objects in the file.
 
    unsigned short   width();
    // Returns the number of fields in the object.
-
+#endif
    void             write(std::vector<variant>& writeble);
    // Constructs an object from the elements in the provided vector and appends it to the file.
    // The number of elements in the vector must match the file's width.
@@ -141,9 +137,11 @@ public:
    // object_index and sector_index keeps count from zero.
 
 private:
+#if 0
    bool     skip();
    void     seek(std::size_t t);
    void     shift_data(const int& size, const std::size_t& f_mark);
+#endif
    void     wmml_get();
 // char     this_type(T& t);
 // auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
@@ -152,7 +150,7 @@ private:
    wmml() {}
    friend class  wmml_marker;
    friend struct wmml_archive_struct;
-
+#if 0
 template <typename T>
 char this_type (T& t) {
    if constexpr (std::is_same<T, int>::value)                       return INT;
@@ -260,13 +258,13 @@ void overwriting(int& object_index, int& sector_index, T& new_data) {
 
     targetFile.write(reinterpret_cast<char*>(&new_data), sizeof(new_data));
 }
-
+#endif
 
 };   // wmml
-
+#if 0
 template <>
 void wmml::write_sector<std::string> (std::string& t);
-
+#endif
 
 
 

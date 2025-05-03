@@ -53,7 +53,7 @@ wmml::~wmml () {
    targetFile.close();
 }
 
-
+#if 0
 unsigned wmml::height () {
    return height_;
 }
@@ -62,7 +62,7 @@ unsigned wmml::height () {
 unsigned short wmml::width () {
    return width_;
 }
-
+#endif
 
 
 
@@ -97,7 +97,7 @@ bool wmml::read(std::vector<variant>& output) {
 
 
 
-
+#if 0
 bool wmml::skip () {
    error_ = 0;
    char id = 0;
@@ -146,7 +146,6 @@ bool wmml::skip () {
    else return true;
 }
 
-
 void wmml::seek(std::size_t t) {
 #ifdef WIN32
     targetFile.seekp(t);
@@ -155,6 +154,7 @@ void wmml::seek(std::size_t t) {
     targetFile.seekp(t);
 #endif
 }
+
 
 
 
@@ -224,7 +224,7 @@ void wmml::shift_data (const int& size, const std::size_t& f_mark) {
     targetFile.write(buffer, size);
     seek(s_mark);
 }
-
+#endif
 
 
 

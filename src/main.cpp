@@ -66,7 +66,7 @@ int main()
         //         use(parameter);
         //     }, entry);
         // }
-        archived->unarchiving("unarchived.wmml");
+        // archived->unarchiving("unarchived.wmml");
         delete archived;
 #endif
     } catch (const char *error_code) {
