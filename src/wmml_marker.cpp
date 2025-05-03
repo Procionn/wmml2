@@ -1,5 +1,4 @@
 #include "wmml.h"
-#include <array>
 
 wmml_marker::wmml_marker (wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark) {
     targetFile.open(parent->file_path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
@@ -27,30 +26,35 @@ wmml_marker::wmml_marker (const std::filesystem::path& path) : wmml(path) {
     s_mark = 0;
 }
 
+wmml_marker::~wmml_marker () {
 
-void wmml_marker::unarchiving (std::filesystem::path unarchivedFilePath) {
-// #if 0
-   if (std::filesystem::exists(unarchivedFilePath))
-      throw "WMML ERROR: you are trying to create an existing file";
-   if (!parent)
-      throw "WMML ERROR: you trying unurchiving to not archived file";
-   std::ofstream created_file(unarchivedFilePath, std::ios::binary);
-   created_file.close();
+}
 
-   targetFile.open(unarchivedFilePath, std::ios::binary | std::ios::in | std::ios::out);
-   file_path = unarchivedFilePath;
 
-    std::size_t fileDataSize = s_mark - f_mark;
+void wmml_marker::unarchiving (const std::filesystem::path& unarchivedFilePath) {
+    if (std::filesystem::exists(unarchivedFilePath))
+        throw "WMML ERROR: you are trying to create an existing file";
+    if (!parent)
+        throw "WMML ERROR: you trying unurchiving to not archived file";
+    std::ofstream new_file(unarchivedFilePath, std::ios::binary | std::ios::out);
+    file_path = unarchivedFilePath;
+
+    std::size_t fileDataSize = s_mark - f_mark - 1;
     std::size_t iterationsCount = fileDataSize / divisor;
     unsigned int surplusSize = fileDataSize % divisor;
 
     char buffer[divisor];
+    parent->targetFile.clear();
     parent->seek(f_mark);
-    for (; iterationsCount != 0; --iterationsCount) {
-       parent->targetFile.read(buffer, divisor);
 
-   }
-// #endif
+    for (; iterationsCount != 0; --iterationsCount) {
+        parent->targetFile.read(buffer, divisor);
+        new_file.write(buffer, divisor);
+    }
+
+    parent->targetFile.read(buffer, surplusSize);
+    new_file.write(buffer, surplusSize);
+    new_file.close();
 }
 
 

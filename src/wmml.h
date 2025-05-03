@@ -7,6 +7,7 @@
 #ifndef NDEBUG
 #include <typeinfo>
 #endif
+#include "base_wmml.h"
 
 // namespace stc {
 
@@ -278,7 +279,8 @@ class wmml_marker : public wmml {
 public:
    wmml_marker(wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark);
    wmml_marker(const std::filesystem::path& path);
-   void unarchiving (std::filesystem::path unarchivedFilePath);
+   ~wmml_marker();
+   void unarchiving (const std::filesystem::path& unarchivedFilePath);
    bool read(std::vector<variant>& output);
    void write();
 private:

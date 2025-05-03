@@ -20,6 +20,7 @@ wmml::wmml (const std::filesystem::path& path) {
         if (archivedCount != 0)
             wmml_get();
         start = targetFile.tellg();
+        localArchiveCount = archivedCount;
     }
 }
 
@@ -304,8 +305,8 @@ void wmml::set_wmml (wmml_marker* target) {
 
 
 wmml_marker* wmml::get_wmml () {
-    auto marker = archived_files[archivedCount]->open();
-    --archivedCount;
+    --localArchiveCount;
+    auto marker = archived_files[localArchiveCount]->open();
     return marker;
 }
 
