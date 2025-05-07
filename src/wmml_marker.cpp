@@ -60,9 +60,8 @@ bool wmml_marker::read (std::vector<variant>& output) {
     if (width_ != output.size())
         throw "WMML ERROR: The size of the container does not match the file width_";
     for (int i = 0; i != width_; ++i) {
-       if (targetFile.tellg() >= s_mark)
-          return false;
-       std::cout << "this pos:" << targetFile.tellg() << "\n";
+        if (targetFile.tellg() >= s_mark)
+            return false;
         output[i] = read_sector();
         switch(error_) {
             case 0: continue;

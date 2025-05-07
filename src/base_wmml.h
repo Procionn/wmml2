@@ -1,8 +1,19 @@
 #pragma once
+#ifdef _WIN32
+    #ifdef BUILDING_WMML_LIB
+        #define WMML_API __declspec(dllexport)
+    #else
+        #define WMML_API __declspec(dllimport)
+    #endif
+#else
+    #define WMML_API __attribute__((visibility("default")))
+#endif
+
 #include <variant>
 #include <filesystem>
 #include <fstream>
 #include <vector>
+
 
 class wmml;
 class wmml_marker;
