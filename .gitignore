@@ -1,0 +1,7 @@
+*.o
+*.ru
+*.user
+
+
+/cmake
+/build

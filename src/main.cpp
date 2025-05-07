@@ -62,11 +62,10 @@ int main()
         archived->read(v);
         std::cout << "\n";
         for (auto& entry : v) {
-            std::visit([&](auto& parameter) {
+            std::visit([&](const auto& parameter) {
                 use(parameter);
             }, entry);
         }
-        // archived->unarchiving("unarchived.wmml");
         delete archived;
 #endif
     } catch (const char *error_code) {
