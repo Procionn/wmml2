@@ -67,6 +67,7 @@ void wmml::write (std::vector<variant>& writeble) {
             write_sector(parameter);
         }, entry);
    ++height_;
+   end_ = targetFile.tellp();
 }
 
 
