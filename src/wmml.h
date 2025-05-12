@@ -1,23 +1,10 @@
 #pragma once
-#ifndef NDEBUG
-#include <iostream>
-#include <typeinfo>
-#endif
 #include "base_wmml.h"
 
 // namespace stc {
 
 class wmml_marker;
 struct wmml_archive_struct;
-
-
-#ifndef NDEBUG
-template <typename T>
-void use(T t) {
-    std::cout << typeid(t).name() << " -> " << t << std::endl;
-}
-#endif
-
 
 
 
@@ -43,11 +30,13 @@ public:
     // Reads an object from the file and stores it in the provided vector.
     // The number of elements in the vector must match the file's width.
 
-    void             set_wmml(wmml* target);
+    void             set_wmml(wmml_marker* target);
     // Writes a wmml archive to a file
 
     wmml_marker*     get_wmml();
-    // Reads a wmml archive from an archive
+    // Reads archived wmml files, returns a pointer to wmml_marker. 
+    // Returns pointers starting from the last archived one. 
+    // After returning the pointer to the last archived file, returns nullptr
 
     void             remove_object(int object_index);
     // Deletes the specified field from the object. Keeps count from zero.
@@ -60,7 +49,7 @@ public:
 
     template<typename T>
     void             overwriting_sector(int object_index, int sector_index, T& new_data) {
-                           overwriting(    object_index,     sector_index,    new_data);}
+                            overwriting(    object_index,     sector_index,    new_data);}
     // A function that is strongly discouraged from use due to its instability.
     // Overwrites a selected sector of an object. If the size or type of the new data
     // does not match the existing one, an exception is thrown.
@@ -69,7 +58,6 @@ public:
     // object_index and sector_index keeps count from zero.
 
 private:
-    std::size_t size();
     friend class  wmml_marker;
     friend struct wmml_archive_struct;
 };   // wmml

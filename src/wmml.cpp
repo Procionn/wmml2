@@ -2,7 +2,7 @@
 
 wmml::wmml (const std::filesystem::path& path) {
     targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
-    file_path = path;
+    filePath = path;
 
     if (!targetFile.is_open())
         throw "WMML ERROR: the opened file does not exists!";
@@ -25,32 +25,32 @@ wmml::wmml (const std::filesystem::path& path) {
 }
 
 wmml::wmml (const std::filesystem::path& path, short unsigned width) {
-   if (std::filesystem::exists(path))
-    throw "WMML ERROR: you are trying to create an existing file";
-   std::ofstream created_file(path, std::ios::binary);
-   created_file.close();
+    if (std::filesystem::exists(path))
+        throw "WMML ERROR: you are trying to create an existing file";
+    std::ofstream created_file(path, std::ios::binary);
+    created_file.close();
 
-   targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out);
-   file_path = path;
-   if (!targetFile.is_open())
+    targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out);
+    filePath = path;
+    if (!targetFile.is_open())
        throw " WMML ERROR: file is not open";
 
-   height_ = 0;
-   width_ = width;
-   archivedCount = 0;
-   targetFile.write(reinterpret_cast<char*>(&version), sizeof(version));
-   targetFile.write(reinterpret_cast<char*>(&width_), sizeof(width_));
-   targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
-   targetFile.write(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
-   end_ = targetFile.tellp();
-   start = targetFile.tellg();
+    height_ = 0;
+    width_ = width;
+    archivedCount = 0;
+    targetFile.write(reinterpret_cast<char*>(&version), sizeof(version));
+    targetFile.write(reinterpret_cast<char*>(&width_), sizeof(width_));
+    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
+    targetFile.write(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
+    end_ = targetFile.tellp();
+    start = targetFile.tellg();
 }
 
 wmml::~wmml () {
-   targetFile.seekp(sizeof(version) + sizeof(width_));
-   targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
-   targetFile.write(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
-   targetFile.close();
+    targetFile.seekp(sizeof(version) + sizeof(width_));
+    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
+    targetFile.write(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
+    targetFile.close();
 }
 
 
@@ -58,16 +58,16 @@ wmml::~wmml () {
 
 
 void wmml::write (std::vector<variant>& writeble) {
-   if (writeble.size() != width_)
+    if (writeble.size() != width_)
         throw "WMML ERROR: The size of the recorded object must be equal to the file width_";
-   if (end_ != targetFile.tellp())
-       targetFile.seekp(end_);
-   for (auto& entry : writeble)
+    if (end_ != targetFile.tellp())
+        targetFile.seekp(end_);
+    for (auto& entry : writeble)
         std::visit([&](auto& parameter) {
             write_sector(parameter);
         }, entry);
-   ++height_;
-   end_ = targetFile.tellp();
+    ++height_;
+    end_ = targetFile.tellp();
 }
 
 
@@ -109,16 +109,20 @@ void wmml::remove_object (int object_index) {
     int surplus_size = end_ - static_cast<std::size_t>(targetFile.tellg());
     shift_data(surplus_size, f_mark);
 
-    std::filesystem::resize_file(file_path, deleted_size);
+    std::filesystem::resize_file(filePath, deleted_size);
     --height_;
 }
 
 
 
-void wmml::set_wmml (wmml* target) {
+void wmml::set_wmml (wmml_marker* target) {
+    if (!target)
+        throw "WMML ERROR: the target wmml_marker is equal to nullptr.";
+    if (target->filePath == this->filePath)
+        throw "WMML ERROR: it is impossible to archive the file to itself (the path of the main and archived file are the same)";
     std::size_t newFileSize = target->size();
     std::size_t newEnd = end_ + newFileSize + 2; // 2 - the size of the markers located on the borders of the archived file
-    std::filesystem::resize_file(file_path, newEnd);
+    std::filesystem::resize_file(filePath, newEnd);
 
     std::size_t fileDataSize = end_ - start;
     std::size_t iterationsCount = fileDataSize / divisor;
@@ -167,13 +171,9 @@ void wmml::set_wmml (wmml* target) {
 
 
 wmml_marker* wmml::get_wmml () {
+    if (localArchiveCount == 0) 
+        return nullptr; 
     --localArchiveCount;
     auto marker = archived_files[localArchiveCount]->open();
     return marker;
-}
-
-
-
-std::size_t wmml::size () {
-    return end_;
 }

@@ -13,7 +13,9 @@
 #include <filesystem>
 #include <fstream>
 #include <vector>
-
+#ifndef NDEBUG
+    #include <iostream>
+#endif
 
 class wmml;
 class wmml_marker;
@@ -86,7 +88,7 @@ using variant = std::variant<
 
 protected:
 
-    std::filesystem::path file_path;
+    std::filesystem::path filePath;
     std::fstream          targetFile;
     short unsigned int    width_;
     unsigned int          height_;
@@ -107,11 +109,13 @@ public:
 
     unsigned short   width();
     // Returns the number of fields in the object.
+
 protected:
     bool     skip();
     void     seek(std::size_t t);
     void     shift_data(const int& size, const std::size_t& f_mark);
     void     wmml_get();
+    std::size_t size();
     // char     this_type(T& t);
     // auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
     // variant  read_sector();

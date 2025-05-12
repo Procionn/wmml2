@@ -15,7 +15,7 @@ add_library(wmml SHARED
 	src/base_wmml.h src/base_wmml.cpp
 )
 
-set_target_properties(wmml PROPERTIES PREFIX "")
+# set_target_properties(wmml PROPERTIES PREFIX "")
 
 target_include_directories(wmml PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

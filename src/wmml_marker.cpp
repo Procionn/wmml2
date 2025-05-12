@@ -1,8 +1,8 @@
 #include "wmml.h"
 
 wmml_marker::wmml_marker (wmml* parent, unsigned long long& f_mark, unsigned long long& s_mark) {
-    targetFile.open(parent->file_path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
-    file_path = parent->file_path;
+    targetFile.open(parent->filePath, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
+    filePath = parent->filePath;
 
     this->parent = parent;
     this->f_mark = f_mark;
@@ -10,20 +10,40 @@ wmml_marker::wmml_marker (wmml* parent, unsigned long long& f_mark, unsigned lon
 
     seek(f_mark);
 
-     targetFile.read(reinterpret_cast<char*>(&version), sizeof(version));
-     targetFile.read(reinterpret_cast<char*>(&width_), sizeof(width_));
-     targetFile.read(reinterpret_cast<char*>(&height_), sizeof(height_));
-     targetFile.read(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
-     localArchiveCount = archivedCount;
-     if (archivedCount != 0)
-            wmml_get();
-     start = targetFile.tellg();
+    targetFile.read(reinterpret_cast<char*>(&version), sizeof(version));
+    targetFile.read(reinterpret_cast<char*>(&width_), sizeof(width_));
+    targetFile.read(reinterpret_cast<char*>(&height_), sizeof(height_));
+    targetFile.read(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
+    localArchiveCount = archivedCount;
+    if (archivedCount != 0)
+        wmml_get();
+    start = targetFile.tellg();
 }
 
 wmml_marker::wmml_marker (const std::filesystem::path& path) {
-   parent = nullptr;
+    parent = nullptr;
     f_mark = 0;
     s_mark = 0;
+    filePath = path;
+
+    targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
+    if (!targetFile.is_open())
+        throw "WMML ERROR: the opened file does not exists!";
+
+    end_ = targetFile.tellp();
+    seek(0);
+    targetFile.read(reinterpret_cast<char*>(&version), sizeof(version));
+    targetFile.read(reinterpret_cast<char*>(&width_), sizeof(width_));
+    targetFile.read(reinterpret_cast<char*>(&height_), sizeof(height_));
+    targetFile.read(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
+#ifdef WIN32
+    targetFile.seekp(targetFile.tellg());
+#endif
+    localArchiveCount = archivedCount;
+    if (archivedCount != 0)
+        wmml_get();
+    start = targetFile.tellg();
+    localArchiveCount = archivedCount;
 }
 
 
@@ -34,7 +54,7 @@ void wmml_marker::unarchiving (const std::filesystem::path& unarchivedFilePath) 
     if (!parent)
         throw "WMML ERROR: you trying unurchiving to not archived file";
     std::ofstream new_file(unarchivedFilePath, std::ios::binary | std::ios::out);
-    file_path = unarchivedFilePath;
+    filePath = unarchivedFilePath;
 
     std::size_t fileDataSize = s_mark - f_mark - 1;
     std::size_t iterationsCount = fileDataSize / divisor;
