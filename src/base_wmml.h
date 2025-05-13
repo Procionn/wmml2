@@ -38,30 +38,30 @@ class base_wmml
 {
 protected:
 enum formats {
-    INT = 1,
-    UNSIGNED_INT,
-    LONG_INT,
-    UNSIGNED_LONG_INT,
-    LONG_LONG_INT,
-    UNSIGNED_LONG_LONG_INT,
-    SHORT_INT,
-    UNSIGNED_SHORT_INT,
-
-    CHAR,
-    SIGNED_CHAR,
-    UNSIGNED_CHAR,
-    WCHAR_T,
-    STRING,
-    STRING64K,
-    STRING1KK,
-
-    FLOAT,
-    DOUBLE,
-    LONG_DOUBLE,
-
-    BOOL,
-    S_WMML,      // start wmml
-    E_WMML       //  end  wmml
+    INT = 1,                // 1
+    UNSIGNED_INT,           // 2
+    LONG_INT,               // 3
+    UNSIGNED_LONG_INT,      // 4
+    LONG_LONG_INT,          // 5
+    UNSIGNED_LONG_LONG_INT, // 6
+    SHORT_INT,              // 7
+    UNSIGNED_SHORT_INT,     // 8
+                            //
+    CHAR,                   // 9
+    SIGNED_CHAR,            // 10
+    UNSIGNED_CHAR,          // 11
+    WCHAR_T,                // 12
+    STRING,                 // 13
+    STRING64K,              // 14
+    STRING1KK,              // 15
+                            //
+    FLOAT,                  // 16
+    DOUBLE,                 // 17
+    LONG_DOUBLE,            // 18 
+                            //
+    BOOL,                   // 19
+    S_WMML, // start wmml   // 20
+    E_WMML  //  end  wmml   // 21
 };
 
 public:

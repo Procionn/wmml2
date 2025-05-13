@@ -149,25 +149,26 @@ void base_wmml::shift_data (const int& size, const std::size_t& f_mark) {
 
 
 void base_wmml::wmml_get () {
-    int opened_archive_count = 0;
+    int openedArchiveCount = 0;
     unsigned long long f_mark;
     skip();
     switch (error_) {
         case 1: throw "WMML ERROR: file is end";
-        case 2:
+        case 2: {
             f_mark = targetFile.tellg();
-            ++opened_archive_count;
-            while (opened_archive_count != 0) {
+            relative_move(dataSize);
+            ++openedArchiveCount;
+            while (openedArchiveCount != 0) {
                 skip();
                 switch (error_) {
                     case 0: continue;
                     case 1: throw "WMML ERROR: file is end";
-                    case 2: ++opened_archive_count;
-                           relative_move(dataSize); break;
-                    case 3: --opened_archive_count; break;
+                    case 2: ++openedArchiveCount;
+                         relative_move(dataSize); break;
+                    case 3: --openedArchiveCount; break;
                 }
             }
-            break;
+        } break;
         default: {
 #ifndef NDEBUG
             std::cerr << this->filePath << std::endl;
