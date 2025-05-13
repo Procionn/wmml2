@@ -101,6 +101,7 @@ protected:
     unsigned int          localArchiveCount;
     unsigned long long    start;
     static constexpr int  divisor = 4096;
+    static constexpr int  dataSize = sizeof(char)/*version*/ + sizeof(unsigned short)/*width_*/ + sizeof(unsigned) /*height_*/ + sizeof(unsigned) /*archivedCount*/;
 
 public:
 
@@ -116,6 +117,7 @@ protected:
     void     shift_data(const int& size, const std::size_t& f_mark);
     void     wmml_get();
     std::size_t size();
+    void     relative_move(std::size_t t);
     // char     this_type(T& t);
     // auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
     // variant  read_sector();

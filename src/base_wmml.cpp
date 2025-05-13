@@ -17,7 +17,7 @@ bool base_wmml::skip () {
     std::size_t size = 0;
     targetFile.read(&id, sizeof(id));
     switch (id) {
-        case 0:                         return false;
+        case 0:                         error_ = 1; return false;
         case INT:                       size = sizeof(int);                     break;
         case UNSIGNED_INT:              size = sizeof(unsigned int);            break;
         case LONG_INT:                  size = sizeof(long int);                break;
@@ -53,12 +53,7 @@ bool base_wmml::skip () {
         case E_WMML:                    error_ = 3;                             break;
         default : throw "WMML ERROR (in reader): unknown type id";
     }
-#ifdef WIN32
-    targetFile.seekp(size, std::ios::cur);
-    targetFile.seekg(size, std::ios::cur);
-#elif __linux__
-    targetFile.seekp(size, std::ios::cur);
-#endif
+    relative_move(size);
     if (targetFile.eof())
         return false;
     else return true;
@@ -71,6 +66,16 @@ void base_wmml::seek(std::size_t t) {
     targetFile.seekg(t);
 #elif __linux__
     targetFile.seekp(t);
+#endif
+}
+
+
+void base_wmml::relative_move(std::size_t t) {
+#ifdef WIN32
+    targetFile.seekp(t, std::ios::cur);
+    targetFile.seekg(t, std::ios::cur);
+#elif __linux__
+    targetFile.seekp(t, std::ios::cur);
 #endif
 }
 
@@ -157,13 +162,16 @@ void base_wmml::wmml_get () {
                 switch (error_) {
                     case 0: continue;
                     case 1: throw "WMML ERROR: file is end";
-                    case 2: ++opened_archive_count; break;
+                    case 2: ++opened_archive_count;
+                           relative_move(dataSize); break;
                     case 3: --opened_archive_count; break;
                 }
             }
             break;
         default: {
+#ifndef NDEBUG
             std::cerr << this->filePath << std::endl;
+#endif
             throw ("WMML ERROR: not found wmml!");
         } 
     }
