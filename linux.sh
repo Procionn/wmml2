@@ -6,9 +6,13 @@ mkdir cmake
 cd cmake
 cmake ..
 make
-cd ..
+
+cd tests
+ctest
+
+cd ../..
 rm -rf out
 mkdir out
-cp cmake/libwmml.so out/libwmml.so
+cp cmake/src/libwmml.so out/libwmml.so
 cp src/wmml.h out/wmml.h
 cp src/base_wmml.h out/base_wmml.h
