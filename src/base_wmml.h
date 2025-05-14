@@ -34,7 +34,7 @@ private:
 
 
 
-class base_wmml
+class WMML_API base_wmml
 {
 protected:
 enum formats {
