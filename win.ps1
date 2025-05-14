@@ -4,6 +4,7 @@ cd cmake
 cmake -G Ninja ..
 ninja
 
+cp src/libwmml.dll tests/libwmml.dll
 cd tests
 ctest
 

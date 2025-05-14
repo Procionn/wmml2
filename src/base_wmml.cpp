@@ -72,7 +72,7 @@ void base_wmml::seek(std::size_t t) {
 
 void base_wmml::relative_move(std::size_t t) {
 #ifdef WIN32
-    targetFile.seekp(t, std::ios::cur);
+//    targetFile.seekp(t, std::ios::cur);
     targetFile.seekg(t, std::ios::cur);
 #elif __linux__
     targetFile.seekp(t, std::ios::cur);
