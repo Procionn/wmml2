@@ -10,6 +10,12 @@ unsigned short base_wmml::width () {
 }
 
 
+base_wmml::~base_wmml () {
+    for (const auto* pointer : archived_files)
+        delete pointer;
+}
+
+
 
 bool base_wmml::skip () {
     error_ = 0;

@@ -111,6 +111,8 @@ public:
     unsigned short   width();
     // Returns the number of fields in the object.
 
+    virtual ~base_wmml();
+
 protected:
     bool     skip();
     void     seek(std::size_t t);
