@@ -91,6 +91,7 @@ bool wmml::read(std::vector<variant>& output) {
 
 
 void wmml::remove_object (int object_index) {
+    seek(start);
     std::size_t index = (object_index * width_);
     for (;index != 0; --index)
         if (!skip())
@@ -110,9 +111,32 @@ void wmml::remove_object (int object_index) {
     shift_data(surplus_size, f_mark);
 
     std::filesystem::resize_file(filePath, deleted_size);
+    end_ = deleted_size;
     --height_;
 }
 
+
+void wmml::reset () {
+    seek(start);
+    localArchiveCount = archivedCount;
+}
+
+
+void wmml::flush () {
+    std::size_t mark = targetFile.tellg();
+#if WIN32
+    std::size_t mark_p = targetFile.tellp();
+#endif
+    targetFile.seekp(sizeof(version) + sizeof(width_));
+    targetFile.write(reinterpret_cast<char*>(&height_), sizeof(height_));
+    targetFile.write(reinterpret_cast<char*>(&archivedCount), sizeof(archivedCount));
+
+    targetFile.seekg(mark);
+#if WIN32
+    targetFile.seekp(mark_p);
+#endif
+    targetFile.flush();
+}
 
 
 void wmml::set_wmml (wmml_marker* target) {
