@@ -9,4 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-O3)
 
 add_subdirectory(src)
-add_subdirectory(tests)
+if(ENABLE_TESTING)
+  add_subdirectory(tests)
+endif()
