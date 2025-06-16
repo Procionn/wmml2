@@ -8,7 +8,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_options(-O3)
 
+target_include_directories(wmml PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 add_subdirectory(src)
 if(ENABLE_TESTING)
   add_subdirectory(tests)
 endif()
+
