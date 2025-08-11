@@ -5,7 +5,7 @@ wmml::wmml (const std::filesystem::path& path) {
     filePath = path;
 
     if (!targetFile.is_open())
-        throw "WMML ERROR: the opened file does not exists!";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: the opened file does not exists!");
     else {
         end_ = targetFile.tellp();
         seek(0);
@@ -26,14 +26,14 @@ wmml::wmml (const std::filesystem::path& path) {
 
 wmml::wmml (const std::filesystem::path& path, short unsigned width) {
     if (std::filesystem::exists(path))
-        throw "WMML ERROR: you are trying to create an existing file";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: you are trying to create an existing file");
     std::ofstream created_file(path, std::ios::binary);
     created_file.close();
 
     targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out);
     filePath = path;
     if (!targetFile.is_open())
-       throw " WMML ERROR: file is not open";
+       throw std::runtime_error(filePath.string() + "  WMML ERROR: file is not open");
 
     height_ = 0;
     width_ = width;
@@ -59,7 +59,7 @@ wmml::~wmml () {
 
 void wmml::write (std::vector<variant>& writeble) {
     if (writeble.size() != width_)
-        throw "WMML ERROR: The size of the recorded object must be equal to the file width_";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: The size of the recorded object must be equal to the file width_");
     if (end_ != targetFile.tellp())
         targetFile.seekp(end_);
     for (auto& entry : writeble)
@@ -73,14 +73,14 @@ void wmml::write (std::vector<variant>& writeble) {
 
 bool wmml::read(std::vector<variant>& output) {
     if (width_ != output.size())
-        throw "WMML ERROR: The size of the container does not match the file width_";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: The size of the container does not match the file width_");
     for (int i = 0; i != width_; ++i) {
         output[i] = read_sector();
         switch(error_) {
             case 0: continue;
             case 1: return false;
             case 2:
-            case 3: throw "WMML debug error: reader came across the markup of the wmml archive sector";
+            case 3: throw std::runtime_error(filePath.string() + " WMML debug error: reader came across the markup of the wmml archive sector");
         }
     }
     return true;
@@ -95,11 +95,11 @@ void wmml::remove_object (int object_index) {
     std::size_t index = (object_index * width_);
     for (;index != 0; --index)
         if (!skip())
-            throw "WMML ERROR: the specified object is outside the file boundary";
+            throw std::runtime_error(filePath.string() + " WMML ERROR: the specified object is outside the file boundary");
     std::size_t f_mark = targetFile.tellg();
     for (int i = width_; i != 0; --i)
         if (!skip())
-            throw "WMML ERROR: the specified object is outside the file boundary";
+            throw std::runtime_error(filePath.string() + " WMML ERROR: the specified object is outside the file boundary");
     std::size_t this_pos = targetFile.tellg();
     std::size_t deleted_size = end_ - (this_pos - f_mark);
 
@@ -141,9 +141,9 @@ void wmml::flush () {
 
 void wmml::set_wmml (wmml_marker* target) {
     if (!target)
-        throw "WMML ERROR: the target wmml_marker is equal to nullptr.";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: the target wmml_marker is equal to nullptr.");
     if (target->filePath == this->filePath)
-        throw "WMML ERROR: it is impossible to archive the file to itself (the path of the main and archived file are the same)";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: it is impossible to archive the file to itself (the path of the main and archived file are the same)");
     std::size_t newFileSize = target->size();
     std::size_t newEnd = end_ + newFileSize + 2; // 2 - the size of the markers located on the borders of the archived file
     std::filesystem::resize_file(filePath, newEnd);

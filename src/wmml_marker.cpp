@@ -28,7 +28,7 @@ wmml_marker::wmml_marker (const std::filesystem::path& path) {
 
     targetFile.open(path, std::ios::binary | std::ios::in | std::ios::out | std::ios::ate);
     if (!targetFile.is_open())
-        throw "WMML ERROR: the opened file does not exists!";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: the opened file does not exists!");
 
     end_ = targetFile.tellp();
     seek(0);
@@ -50,9 +50,9 @@ wmml_marker::wmml_marker (const std::filesystem::path& path) {
 
 void wmml_marker::unarchiving (const std::filesystem::path& unarchivedFilePath) {
     if (std::filesystem::exists(unarchivedFilePath))
-        throw "WMML ERROR: you are trying to create an existing file";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: you are trying to create an existing file");
     if (!parent)
-        throw "WMML ERROR: you trying unurchiving to not archived file";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: you trying unurchiving to not archived file");
     std::ofstream new_file(unarchivedFilePath, std::ios::binary | std::ios::out);
     filePath = unarchivedFilePath;
 
@@ -78,7 +78,7 @@ void wmml_marker::unarchiving (const std::filesystem::path& unarchivedFilePath) 
 
 bool wmml_marker::read (std::vector<variant>& output) {
     if (width_ != output.size())
-        throw "WMML ERROR: The size of the container does not match the file width_";
+        throw std::runtime_error(filePath.string() + " WMML ERROR: The size of the container does not match the file width_");
     for (int i = 0; i != width_; ++i) {
         if (targetFile.tellg() >= s_mark)
             return false;
@@ -86,7 +86,7 @@ bool wmml_marker::read (std::vector<variant>& output) {
         switch(error_) {
             case 0: continue;
             case 1: return false;
-            case 2: throw "WMML debug error: reader came across the markup of the wmml archive sector";
+            case 2: throw std::runtime_error(filePath.string() + " WMML debug error: reader came across the markup of the wmml archive sector");
             case 3: return false;
         }
     }

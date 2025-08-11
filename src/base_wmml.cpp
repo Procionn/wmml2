@@ -57,7 +57,7 @@ bool base_wmml::skip () {
         case BOOL:                      size = sizeof(bool);                    break;
         case S_WMML:                    error_ = 2;                             break;
         case E_WMML:                    error_ = 3;                             break;
-        default : throw "WMML ERROR (in reader): unknown type id";
+        default : throw std::runtime_error(filePath.string() + " WMML ERROR (in reader): unknown type id");
     }
     relative_move(size);
     if (targetFile.eof())
@@ -143,7 +143,7 @@ void base_wmml::write_sector<std::string> (std::string& t) {
 
 void base_wmml::shift_data (const int& size, const std::size_t& f_mark) {
     if (size > divisor)
-        throw "WMML debug ERROR: the buffer does not fit on the stack";
+        throw std::runtime_error(filePath.string() + " WMML debug ERROR: the buffer does not fit on the stack");
     char buffer[divisor];
     targetFile.read(buffer, size);
     std::size_t s_mark = targetFile.tellg();
@@ -159,7 +159,7 @@ void base_wmml::wmml_get () {
     unsigned long long f_mark;
     skip();
     switch (error_) {
-        case 1: throw "WMML ERROR: file is end";
+        case 1: throw std::runtime_error(filePath.string() + " WMML ERROR: file is end");
         case 2: {
             f_mark = targetFile.tellg();
             relative_move(dataSize);
@@ -168,7 +168,7 @@ void base_wmml::wmml_get () {
                 skip();
                 switch (error_) {
                     case 0: continue;
-                    case 1: throw "WMML ERROR: file is end";
+                    case 1: throw std::runtime_error(filePath.string() + " WMML ERROR: file is end");
                     case 2: ++openedArchiveCount;
                          relative_move(dataSize); break;
                     case 3: --openedArchiveCount; break;
@@ -179,7 +179,7 @@ void base_wmml::wmml_get () {
 #ifndef NDEBUG
             std::cerr << this->filePath << std::endl;
 #endif
-            throw ("WMML ERROR: not found wmml!");
+            throw std::runtime_error(filePath.string() + " WMML ERROR: not found wmml!");
         } 
     }
     archived_files.emplace_back(new wmml_archive_struct(f_mark, targetFile.tellg(), this));
