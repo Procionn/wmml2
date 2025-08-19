@@ -121,6 +121,7 @@ protected:
     void     wmml_get();
     std::size_t size();
     void     relative_move(std::size_t t);
+    std::string read_sector_caseString (char type);
     // char     this_type(T& t);
     // auto     read_sector_caseTemplate(); / std::string read_sector_caseString (char type);
     // variant  read_sector();
@@ -128,19 +129,19 @@ protected:
 
 template <typename T>
 char this_type (T& t) {
-    if constexpr (std::is_same<T, int>::value)                       return INT;
-    if constexpr (std::is_same<T, unsigned int>::value)              return UNSIGNED_INT;
-    if constexpr (std::is_same<T, long int>::value)                  return LONG_INT;
-    if constexpr (std::is_same<T, unsigned long int>::value)         return UNSIGNED_LONG_INT;
-    if constexpr (std::is_same<T, long long int>::value)             return LONG_LONG_INT;
-    if constexpr (std::is_same<T, unsigned long long int>::value)    return UNSIGNED_LONG_LONG_INT;
-    if constexpr (std::is_same<T, short int>::value)                 return SHORT_INT;
-    if constexpr (std::is_same<T, unsigned short int>::value)        return UNSIGNED_SHORT_INT;
+    if constexpr (std::is_same<T, int32_t>::value)                  return INT;
+    if constexpr (std::is_same<T, uint32_t>::value)                 return UNSIGNED_INT;
+    if constexpr (std::is_same<T, int64_t>::value)                  return LONG_INT;
+    if constexpr (std::is_same<T, uint64_t>::value)                 return UNSIGNED_LONG_INT;
+    if constexpr (std::is_same<T, int64_t>::value)                  return LONG_LONG_INT;
+    if constexpr (std::is_same<T, uint64_t>::value)                 return UNSIGNED_LONG_LONG_INT;
+    if constexpr (std::is_same<T, int16_t>::value)                  return SHORT_INT;
+    if constexpr (std::is_same<T, uint16_t>::value)                 return UNSIGNED_SHORT_INT;
 
-    if constexpr (std::is_same<T, char>::value)                      return CHAR;
-    if constexpr (std::is_same<T, signed char>::value)               return SIGNED_CHAR;
-    if constexpr (std::is_same<T, unsigned char>::value)             return UNSIGNED_CHAR;
-    if constexpr (std::is_same<T, wchar_t>::value)                   return WCHAR_T;
+    if constexpr (std::is_same<T, char>::value)                     return CHAR;
+    if constexpr (std::is_same<T, signed char>::value)              return SIGNED_CHAR;
+    if constexpr (std::is_same<T, unsigned char>::value)            return UNSIGNED_CHAR;
+    if constexpr (std::is_same<T, wchar_t>::value)                  return WCHAR_T;
     if constexpr (std::is_same<T, std::string>::value) {
         std::size_t size = t.size();
         if      (size < 256)                                        return STRING;
@@ -148,11 +149,11 @@ char this_type (T& t) {
         else if (size < 4294967295)                                 return STRING1KK;
         else throw "WMML ERROR: string is a very big!";
     }
-    if constexpr (std::is_same<T, float>::value)                     return FLOAT;
-    if constexpr (std::is_same<T, double>::value)                    return DOUBLE;
-    if constexpr (std::is_same<T, long double>::value)               return LONG_DOUBLE;
+    if constexpr (std::is_same<T, float>::value)                    return FLOAT;
+    if constexpr (std::is_same<T, double>::value)                   return DOUBLE;
+    if constexpr (std::is_same<T, long double>::value)              return LONG_DOUBLE;
 
-    if constexpr (std::is_same<T, bool>::value)                      return BOOL;
+    if constexpr (std::is_same<T, bool>::value)                     return BOOL;
 }
 
 
@@ -164,8 +165,6 @@ auto read_sector_caseTemplate () {
     return out;
 }
 
-std::string read_sector_caseString (char type);
-
 
 variant read_sector() {
     error_ = 0;
@@ -173,14 +172,14 @@ variant read_sector() {
     targetFile.read(reinterpret_cast<char*>(&id), sizeof(id));
     switch (id) {
     case 0:                         error_ = 1; break;
-    case INT:                       return read_sector_caseTemplate<int>();
-    case UNSIGNED_INT:              return read_sector_caseTemplate<unsigned int>();
-    case LONG_INT:                  return read_sector_caseTemplate<long int>();
-    case UNSIGNED_LONG_INT:         return read_sector_caseTemplate<unsigned long int>();
-    case LONG_LONG_INT:             return read_sector_caseTemplate<long long int>();
-    case UNSIGNED_LONG_LONG_INT:	return read_sector_caseTemplate<unsigned long long int>();
-    case SHORT_INT:                 return read_sector_caseTemplate<short int>();
-    case UNSIGNED_SHORT_INT:        return read_sector_caseTemplate<unsigned short int>();
+    case INT:                       return read_sector_caseTemplate<int32_t>();
+    case UNSIGNED_INT:              return read_sector_caseTemplate<uint32_t>();
+    case LONG_INT:                  return read_sector_caseTemplate<int64_t>();
+    case UNSIGNED_LONG_INT:         return read_sector_caseTemplate<uint64_t>();
+    case LONG_LONG_INT:             return read_sector_caseTemplate<int64_t>();
+    case UNSIGNED_LONG_LONG_INT:	return read_sector_caseTemplate<uint64_t>();
+    case SHORT_INT:                 return read_sector_caseTemplate<int16_t>();
+    case UNSIGNED_SHORT_INT:        return read_sector_caseTemplate<uint16_t>();
 
     case CHAR:                      return read_sector_caseTemplate<char>();
     case SIGNED_CHAR:               return read_sector_caseTemplate<signed char>();

@@ -24,14 +24,14 @@ bool base_wmml::skip () {
     targetFile.read(&id, sizeof(id));
     switch (id) {
         case 0:                         error_ = 1; return false;
-        case INT:                       size = sizeof(int);                     break;
-        case UNSIGNED_INT:              size = sizeof(unsigned int);            break;
-        case LONG_INT:                  size = sizeof(long int);                break;
-        case UNSIGNED_LONG_INT:         size = sizeof(unsigned long int);       break;
-        case LONG_LONG_INT:             size = sizeof(long long int);           break;
-        case UNSIGNED_LONG_LONG_INT:    size = sizeof(unsigned long long int);  break;
-        case SHORT_INT:                 size = sizeof(short int);               break;
-        case UNSIGNED_SHORT_INT:        size = sizeof(unsigned short int);      break;
+        case INT:                       size = sizeof(int32_t);                 break;
+        case UNSIGNED_INT:              size = sizeof(uint32_t);                break;
+        case LONG_INT:                  size = sizeof(int64_t);                 break;
+        case UNSIGNED_LONG_INT:         size = sizeof(uint64_t);                break;
+        case LONG_LONG_INT:             size = sizeof(int64_t);                 break;
+        case UNSIGNED_LONG_LONG_INT:    size = sizeof(uint64_t);                break;
+        case SHORT_INT:                 size = sizeof(int16_t);                 break;
+        case UNSIGNED_SHORT_INT:        size = sizeof(uint16_t);                break;
 
         case CHAR:                      size = sizeof(char);                    break;
         case SIGNED_CHAR:               size = sizeof(signed char);             break;
@@ -41,11 +41,11 @@ bool base_wmml::skip () {
                                         targetFile.read(reinterpret_cast<char*>
                                         (&temp_size),sizeof(temp_size));
                                         size = temp_size;                      }break;
-        case STRING64K:{                unsigned short int temp_size;
+        case STRING64K:{                uint16_t temp_size;
                                         targetFile.read(reinterpret_cast<char*>
                                         (&temp_size),sizeof(temp_size));
                                         size = temp_size;                      }break;
-        case STRING1KK:{                unsigned int temp_size;
+        case STRING1KK:{                uint32_t temp_size;
                                         targetFile.read(reinterpret_cast<char*>
                                         (&temp_size),sizeof(temp_size));
                                         size = temp_size;                      }break;
@@ -96,14 +96,14 @@ std::string base_wmml::read_sector_caseString (char type) {
             return out;
         }
         case 2: {
-            unsigned short int size;
+            uint16_t size;
             targetFile.read(reinterpret_cast<char*>(&size), sizeof(size));
             std::string out(size, '\0');
             targetFile.read(out.data(), size);
             return out;
         }
         case 3: {
-            unsigned int size;
+            uint32_t size;
             targetFile.read(reinterpret_cast<char*>(&size), sizeof(size));
             std::string out(size, '\0');
             targetFile.read(out.data(), size);
@@ -127,12 +127,12 @@ void base_wmml::write_sector<std::string> (std::string& t) {
             targetFile.write(reinterpret_cast<char*>(t.data()), size);
         }break;
         case STRING64K: {
-            unsigned short int size = t.size();
+            uint16_t size = t.size();
             targetFile.write(reinterpret_cast<char*>(&size), sizeof(size));
             targetFile.write(reinterpret_cast<char*>(t.data()), size);
         }break;
         case STRING1KK: {
-            unsigned int size = t.size();
+            uint32_t size = t.size();
             targetFile.write(reinterpret_cast<char*>(&size), sizeof(size));
             targetFile.write(reinterpret_cast<char*>(t.data()), size);
         }break;
