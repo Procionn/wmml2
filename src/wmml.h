@@ -38,7 +38,7 @@ public:
     // Returns pointers starting from the last archived one. 
     // After returning the pointer to the last archived file, returns nullptr
 
-    void             remove_object(int object_index);
+    void             remove_object(const std::size_t& object_index);
     // Deletes the specified field from the object. Keeps count from zero.
 
     void             reset();
@@ -54,8 +54,8 @@ public:
     // Returns the number of fields in the object.
 
     template<typename T>
-    void             overwriting_sector(int object_index, int sector_index, const T& new_data) {
-                            overwriting(    object_index,     sector_index,          new_data);}
+    void             overwriting_sector(const std::size_t& object_index, const std::size_t& sector_index, const T& new_data) {
+                            overwriting(object_index,  sector_index, new_data);}
     // A function that is strongly discouraged from use due to its instability.
     // Overwrites a selected sector of an object. If the size or type of the new data
     // does not match the existing one, an exception is thrown.

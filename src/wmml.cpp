@@ -90,7 +90,7 @@ bool wmml::read(std::vector<variant>& output) {
 
 
 
-void wmml::remove_object (int object_index) {
+void wmml::remove_object (const size_t& object_index) {
     seek(start);
     std::size_t index = (object_index * width_);
     for (;index != 0; --index)
