@@ -54,8 +54,8 @@ public:
     // Returns the number of fields in the object.
 
     template<typename T>
-    void             overwriting_sector(int object_index, int sector_index, T& new_data) {
-                            overwriting(    object_index,     sector_index,    new_data);}
+    void             overwriting_sector(int object_index, int sector_index, const T& new_data) {
+                            overwriting(    object_index,     sector_index,          new_data);}
     // A function that is strongly discouraged from use due to its instability.
     // Overwrites a selected sector of an object. If the size or type of the new data
     // does not match the existing one, an exception is thrown.

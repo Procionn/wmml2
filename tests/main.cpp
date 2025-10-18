@@ -3,11 +3,12 @@
 #include <filesystem>
 #include <wmml.h>
 #include "constants.h"
+#include <iostream>
 
 #define CATCH catch (const char* error) {std::cerr << error << std::endl;}
 
 #define TEST_LIST								\
-    X("wmml/file1.wmml", FILE_1, first_wmm)		\
+    X("wmml/file1.wmml", FILE_1, first_wmml)    \
     X("wmml/file2.wmml", FILE_2, second_wmml) 	\
     X("wmml/file3.wmml", FILE_3, third_wmml)  	\
     X("wmml/file4.wmml", FILE_4, fourth_wmml) 	\
@@ -40,7 +41,8 @@ TEST(Wmml_Reading, name) {																\
 		std::vector<wmml::variant> vector(file.width());								\
 		for (auto& object : vectors) {													\
 		    file.read(vector);															\
-		    ASSERT_EQ((vector == object), true);										\
+            for (int i = 0; i != object.size(); ++i)                                    \
+                ASSERT_EQ(vector[i], object[i]);                                        \
 		}																				\
 		EXPECT_NE((file.read(vector)), true);											\
     });																					\
@@ -134,6 +136,50 @@ TEST(FileComparator, name) {																		\
 	});																								\
 }
 	TEST_LIST
+#undef X
+#undef TEST_LIST
+
+
+
+
+
+#define TEST_LIST                                                   \
+    X("wmml/file1.wmml", FILE_1, 0, 1, int, 8546454, string_to_int) \
+    X("wmml/file2.wmml", FILE_2, 0, 4, std::string, "this is a test overwriting to a string", string_to_string) \
+    X("wmml/file3.wmml", FILE_3, 0, 0, std::string, "bool(false)", bool_to_string)      \
+    X("wmml/file4.wmml", FILE_4, 0, 2, int32_t, 18446741145615, int64t_to_int32t)       \
+    X("wmml/file7.wmml", FILE_7, 0, 1, int64_t, 9223372036854775807, int32t_to_int64t)
+
+#define X(filename, data, column, string, type, value, name)    \
+TEST(SectorOverwriting, name) {                                 \
+    ASSERT_NO_THROW({                                           \
+        wmml object(filename);                                  \
+        object.overwriting_sector(column, string, type(value)); \
+    });                                                         \
+}
+    TEST_LIST
+#undef X
+
+
+
+
+
+#define X(filename, data, column, string, type, value, name)    \
+    TEST(SectorOverwritingTest, name) {                         \
+        ASSERT_NO_THROW({                                       \
+            auto duplicate = data;                              \
+            (duplicate[column])[string] = type(value);          \
+            wmml file(filename);                                \
+            std::vector<wmml::variant> v(file.width());         \
+            for (auto& object : duplicate) {                    \
+                file.read(v);                                   \
+                for (int i = 0; i != object.size(); ++i)        \
+                    ASSERT_EQ(v[i], object[i]);                 \
+            }                                                   \
+            EXPECT_NE((file.read(v)), true);                    \
+        });                                                     \
+    }
+    TEST_LIST
 #undef X
 #undef TEST_LIST
 

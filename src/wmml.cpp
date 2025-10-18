@@ -187,7 +187,6 @@ void wmml::set_wmml (wmml_marker* target) {
     id = E_WMML;
     targetFile.write(reinterpret_cast<char*>(&id), sizeof(id));
 
-
     ++archivedCount;
     delete target;
 }
