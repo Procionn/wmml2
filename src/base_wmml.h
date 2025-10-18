@@ -108,11 +108,21 @@ protected:
 
 public:
 
-    unsigned         height();
+    unsigned         height() {
+        return height_;
+    }
     // Returns the number of objects in the file.
 
-    unsigned short   width();
+    unsigned short   width() {
+        return width_;
+    }
     // Returns the number of fields in the object.
+
+    void         reset() {
+        seek(start);
+        localArchiveCount = archivedCount;
+    }
+    // Sets the object's state to its original state.
 
 private:
     void move        (char* buffer, std::size_t& f_mark, std::size_t& s_mark, const int& size);

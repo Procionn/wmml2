@@ -1,14 +1,5 @@
 #include "base_wmml.h"
 
-unsigned base_wmml::height () {
-    return height_;
-}
-
-
-unsigned short base_wmml::width () {
-    return width_;
-}
-
 
 base_wmml::~base_wmml () {
     for (const auto* pointer : archived_files)

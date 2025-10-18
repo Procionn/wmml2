@@ -116,12 +116,6 @@ void wmml::remove_object (const size_t& object_index) {
 }
 
 
-void wmml::reset () {
-    seek(start);
-    localArchiveCount = archivedCount;
-}
-
-
 void wmml::flush () {
     std::size_t mark = targetFile.tellg();
 #if WIN32
