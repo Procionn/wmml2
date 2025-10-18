@@ -1,12 +1,16 @@
 #pragma once
-#ifdef _WIN32
-    #ifdef BUILDING_WMML_LIB
-        #define WMML_API __declspec(dllexport)
-    #else
-        #define WMML_API __declspec(dllimport)
-    #endif
+#ifdef WMML_STATIC
+    #define WMML_API
 #else
-    #define WMML_API __attribute__((visibility("default")))
+    #ifdef _WIN32
+        #ifdef BUILDING_WMML_LIB
+            #define WMML_API __declspec(dllexport)
+        #else
+            #define WMML_API __declspec(dllimport)
+        #endif
+    #else
+        #define WMML_API __attribute__((visibility("default")))
+    #endif
 #endif
 
 #include <variant>
