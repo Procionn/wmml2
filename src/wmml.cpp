@@ -101,17 +101,9 @@ void wmml::remove_object (const size_t& object_index) {
         if (!skip())
             throw std::runtime_error(filePath.string() + " WMML ERROR: the specified object is outside the file boundary");
     std::size_t this_pos = targetFile.tellg();
-    std::size_t deleted_size = end_ - (this_pos - f_mark);
 
-    std::size_t iterationsCount = (end_ - this_pos) / divisor;
-
-    for (; iterationsCount != 0; --iterationsCount)
-        shift_data(divisor, f_mark);
-    int surplus_size = end_ - static_cast<std::size_t>(targetFile.tellg());
-    shift_data(surplus_size, f_mark);
-
-    std::filesystem::resize_file(filePath, deleted_size);
-    end_ = deleted_size;
+    minimize_shift_data(this_pos, f_mark);
+    resize(f_mark - this_pos);
     --height_;
 }
 
@@ -139,44 +131,23 @@ void wmml::set_wmml (wmml_marker* target) {
     if (target->filePath == this->filePath)
         throw std::runtime_error(filePath.string() + " WMML ERROR: it is impossible to archive the file to itself (the path of the main and archived file are the same)");
     std::size_t newFileSize = target->size();
-    std::size_t newEnd = end_ + newFileSize + 2; // 2 - the size of the markers located on the borders of the archived file
-    std::filesystem::resize_file(filePath, newEnd);
-
-    std::size_t fileDataSize = end_ - start;
-    std::size_t iterationsCount = fileDataSize / divisor;
-    unsigned int surplusSize = fileDataSize % divisor;
-
-    std::size_t f_mark = newEnd;
-    std::size_t s_mark = end_;
-    if (iterationsCount > 0 ) {
-        for (; iterationsCount != 0; --iterationsCount) {
-            f_mark -= divisor;
-            s_mark -= divisor;
-            seek(s_mark);
-            shift_data(divisor, f_mark);
-        }
-    }
-    f_mark -=surplusSize;
-    s_mark -=surplusSize;
-    seek(s_mark);
-    shift_data(surplusSize, f_mark);
-
+    size_t end = end_;
+    resize(newFileSize + 2); // 2 - the size of the markers located on the borders of the archived file
+    maximize_shift_data(start, std::move(end));
 
     unsigned char id = S_WMML;
     seek(start);
     targetFile.write(reinterpret_cast<char*>(&id), sizeof(id));
 
-    iterationsCount = newFileSize / divisor;
-    surplusSize = newFileSize % divisor;
-
+    auto div = std::lldiv(newFileSize, divisor);
     char buffer[divisor];
     target->seek(0);
-    for  (;iterationsCount != 0; --iterationsCount) {
+    for  (; div.quot != 0; --div.quot) {
         target->targetFile.read(buffer, divisor);
         targetFile.write(buffer, divisor);
     }
-    target->targetFile.read(buffer, surplusSize);
-    targetFile.write(buffer, surplusSize);
+    target->targetFile.read(buffer, div.rem);
+    targetFile.write(buffer, div.rem);
 
     id = E_WMML;
     targetFile.write(reinterpret_cast<char*>(&id), sizeof(id));

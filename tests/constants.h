@@ -58,7 +58,7 @@ const std::vector<std::vector<wmml::variant>> FILE_4 = {
 // File 5: width 1, height 4 (минимальная width)
 const std::vector<std::vector<wmml::variant>> FILE_5 = {
     {std::string("single")},
-    {long(0.896)},
+    {long(0)},
     {float(46.5)},
     {bool(false)}
 };
@@ -73,7 +73,7 @@ const std::vector<std::vector<wmml::variant>> FILE_6 = {
 };
 
 // File 7: width 4, height 6 (большие наборы с экстремальными значениями)
-/*const */std::vector<std::vector<wmml::variant>> FILE_7 = {
+const std::vector<std::vector<wmml::variant>> FILE_7 = {
     {
         int(2147483647),
         int32_t(18446741145615),

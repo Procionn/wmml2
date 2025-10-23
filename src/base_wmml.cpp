@@ -69,21 +69,6 @@ void base_wmml::write_sector<std::string> (const std::string& t) {
 
 
 
-#if 1
-void base_wmml::shift_data (const int& size, const std::size_t& f_mark) {
-    if (size > divisor)
-        throw std::runtime_error(filePath.string() + " WMML debug ERROR: the buffer does not fit on the stack");
-    char buffer[divisor];
-    targetFile.read(buffer, size);
-    std::size_t s_mark = targetFile.tellg();
-    seek(f_mark);
-    targetFile.write(buffer, size);
-    seek(s_mark);
-}
-#endif
-
-
-
 void base_wmml::resize(const long long& value) {
     end_ += value;
     std::filesystem::resize_file(filePath, end_);
@@ -124,7 +109,7 @@ void base_wmml::minimize_shift_data (std::size_t f_mark, std::size_t s_mark) {
 
 
 
-void base_wmml::maximize_shift_data (const std::size_t& start, std::size_t&& end) {
+void base_wmml::maximize_shift_data (const std::size_t& start, std::size_t end) {
     char buffer[divisor];
     std::size_t s_mark = end_;
     auto div = std::lldiv((end - start), divisor);

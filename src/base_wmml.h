@@ -138,7 +138,7 @@ protected:
     void     shift_data(const int& size, const std::size_t& f_mark);
 
     void     minimize_shift_data(std::size_t f_mark, std::size_t s_mark);
-    void     maximize_shift_data(const std::size_t& start, std::size_t&& end);
+    void     maximize_shift_data(const std::size_t& start, std::size_t end);
 
     void     wmml_get();
     std::size_t size();

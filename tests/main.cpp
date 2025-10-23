@@ -186,6 +186,25 @@ TEST(SectorOverwriting, name) {                                 \
 
 
 
+#define number 0
+TEST(RemoveObjectTest, 1) {
+    {
+        wmml file("wmml/file5.wmml");
+        file.remove_object(number);
+        auto duplicate = FILE_5;
+        std::vector<wmml::variant> v(file.width());
+        duplicate.erase(duplicate.begin() + number);
+        file.reset();
+        for (auto entry : duplicate) {
+            ASSERT_EQ(file.read(v), true);
+            ASSERT_EQ(v, entry);
+        }
+    }
+}
+
+
+
+
 
 int main (int argc, char** argv) {
 	std::filesystem::path dir = "wmml";
