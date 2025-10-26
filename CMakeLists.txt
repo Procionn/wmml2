@@ -6,8 +6,6 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "Install path pr
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_options(-O3 -flto)
-
 add_subdirectory(src)
 if(ENABLE_TESTING)
   add_subdirectory(tests)

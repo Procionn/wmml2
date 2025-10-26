@@ -1,7 +1,5 @@
 #pragma once
-#ifdef WMML_STATIC
-    #define WMML_API
-#else
+#ifdef WMML_SHARED
     #ifdef _WIN32
         #ifdef BUILDING_WMML_LIB
             #define WMML_API __declspec(dllexport)
@@ -11,6 +9,8 @@
     #else
         #define WMML_API __attribute__((visibility("default")))
     #endif
+#else
+    #define WMML_API
 #endif
 
 #include <variant>
@@ -165,8 +165,8 @@ template <typename T>
 char this_type (const T& t) {
     if constexpr (std::is_same<T, int32_t>::value)                  return INT;
     if constexpr (std::is_same<T, uint32_t>::value)                 return UNSIGNED_INT;
-    if constexpr (std::is_same<T, int64_t>::value)                  return LONG_INT;
-    if constexpr (std::is_same<T, uint64_t>::value)                 return UNSIGNED_LONG_INT;
+    if constexpr (std::is_same<T, long>::value)                     return LONG_INT;
+    if constexpr (std::is_same<T, unsigned long>::value)            return UNSIGNED_LONG_INT;
     if constexpr (std::is_same<T, long long>::value) {
         static_assert(sizeof(unsigned long long) == sizeof(uint64_t),
                       "FATAL COMPILE ERROR. Not supported architecture");
@@ -218,8 +218,8 @@ variant read_sector() {
     case 0:                         error_ = 1; break;
     case INT:                       return read_sector_caseTemplate<int32_t>();
     case UNSIGNED_INT:              return read_sector_caseTemplate<uint32_t>();
-    case LONG_INT:                  return read_sector_caseTemplate<int64_t>();
-    case UNSIGNED_LONG_INT:         return read_sector_caseTemplate<uint64_t>();
+    case LONG_INT:                  return read_sector_caseTemplate<long>();
+    case UNSIGNED_LONG_INT:         return read_sector_caseTemplate<unsigned long>();
     case LONG_LONG_INT:             return read_sector_caseTemplate<long long>();
     case UNSIGNED_LONG_LONG_INT:    return read_sector_caseTemplate<unsigned long long>();
     case SHORT_INT:                 return read_sector_caseTemplate<int16_t>();
@@ -262,8 +262,8 @@ size_t object_size(const T& t) {
     switch (this_type(t)) {
     case INT:                       return sizeof(int32_t);
     case UNSIGNED_INT:              return sizeof(uint32_t);
-    case LONG_INT:                  return sizeof(int64_t);
-    case UNSIGNED_LONG_INT:         return sizeof(uint64_t);
+    case LONG_INT:                  return sizeof(long);
+    case UNSIGNED_LONG_INT:         return sizeof(unsigned long);
     case LONG_LONG_INT:             return sizeof(int64_t);
     case UNSIGNED_LONG_LONG_INT:    return sizeof(uint64_t);
     case SHORT_INT:                 return sizeof(int16_t);
@@ -326,5 +326,5 @@ void base_wmml::write_sector<std::string> (const std::string& t);
 
 
 
-template <>
+template <> WMML_API
 void base_wmml::overwriting<std::string> (const int& object_index, const int& sector_index, const std::string& newData);

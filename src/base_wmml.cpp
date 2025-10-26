@@ -172,8 +172,8 @@ size_t base_wmml::sector_size () {
     case 0:                         error_ = 1; return 0;
     case INT:                       size = sizeof(int32_t);                 break;
     case UNSIGNED_INT:              size = sizeof(uint32_t);                break;
-    case LONG_INT:                  size = sizeof(int64_t);                 break;
-    case UNSIGNED_LONG_INT:         size = sizeof(uint64_t);                break;
+    case LONG_INT:                  size = sizeof(long);                    break;
+    case UNSIGNED_LONG_INT:         size = sizeof(unsigned long);           break;
     case LONG_LONG_INT:             size = sizeof(int64_t);                 break;
     case UNSIGNED_LONG_LONG_INT:    size = sizeof(uint64_t);                break;
     case SHORT_INT:                 size = sizeof(int16_t);                 break;
