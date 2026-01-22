@@ -78,7 +78,8 @@ bool wmml::read(std::vector<variant>& output) {
         output[i] = read_sector();
         switch(error_) {
             case 0: continue;
-            case 1: return false;
+            case 1: error_ = 0;
+		    return false;
             case 2:
             case 3: throw std::runtime_error(filePath.string() + " WMML debug error: reader came across the markup of the wmml archive sector");
         }
