@@ -1,5 +1,6 @@
 #include "stream.hpp"
 #include <cstring>
+#include <cassert>
 
 
 #ifdef NDEBUG
@@ -70,7 +71,7 @@ void stream::open (const std::size_t& allocSize) {
 
 bool stream::read (std::byte* s, const std::size_t count) {
     if (headPos + count > size) {
-        STREAM_DEBUG_EXCEPTION("Attempt to carry on a shift abroad")
+        // STREAM_DEBUG_EXCEPTION("Attempt to carry on a shift abroad")
         return false;
     }
     std::memcpy(s, get_buff() + headPos, count);
@@ -108,4 +109,17 @@ std::byte* stream::get_ptr (const std::size_t count) {
         return nullptr;
     }
     return &get_buff()[headPos];
+}
+
+void stream::move (const std::size_t from, const std::size_t to) {
+    assert(from < size); // Unable to start copying abroad stream
+    std::size_t moved_size = size - from;
+    size = to + moved_size;
+    if (size > STREAM_SIZE && size > allocated_memory)
+        realloc();
+    assert(to < size);
+    assert(to + moved_size >= size);
+    memmove(static_cast<void*>(&get_buff()[from]),
+            static_cast<void*>(&get_buff()[to]),
+            moved_size);
 }

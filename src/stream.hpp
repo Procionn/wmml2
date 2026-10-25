@@ -44,4 +44,5 @@ public:
     bool seek (const uint64_t pos);
     void rel_seek (const int64_t shift);
     std::byte* get_ptr (const std::size_t count);
+    void move(const std::size_t from, const std::size_t to);
 };

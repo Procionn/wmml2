@@ -1,5 +1,6 @@
 #include "../src/wmml2.hpp"
 #include <string>
+#include <iostream>
 using namespace std::literals;
 
 int main () {

@@ -57,12 +57,16 @@ struct string {}; /// TODO: make the realization of compressed string to cheap w
 
 
 
+
+
 enum class WmmlFormats : uint8_t{
     ERROR = 0
 #define X(name, num, type) ,name = num
     SUPPORTED_TYPES(X)
 #undef X
 };
+
+
 
 
 
@@ -75,11 +79,6 @@ template<> constexpr std::byte type_to_hash<type> () { return static_cast<std::b
 #undef X
 
 
-
-
-// #define X(name, num, type) \
-
-// #undef X
 
 
 
@@ -110,9 +109,3 @@ enum class LegacyWmmlFormats : uint8_t{
     S_WMML, // start wmml   // 20
     E_WMML  //  end  wmml   // 21
 };
-
-
-
-constexpr int8_t operator""_c(unsigned long long v) {
-    return static_cast<int8_t>(v);
-}

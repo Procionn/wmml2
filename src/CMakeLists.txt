@@ -3,10 +3,11 @@ set(SOURCE
     stream.cpp
 )
 
+
 if (BUILD_SHARED_LIBS)
     set(FLAGS
         -O3
-        -flto
+        # -flto
     )
 else ()
     set(FLAGS

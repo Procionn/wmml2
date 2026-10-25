@@ -20,7 +20,7 @@ add_executable(STREAM
     stream.cpp
 )
 
-add_executable(WMML2
+add_executable(WMML_TESTS
     wmml2_tests.cpp
 )
 
@@ -29,9 +29,9 @@ add_executable(WMML2
 # )
 
 target_link_libraries(STREAM PUBLIC
-  wmml_static
+  WMML
 )
 
-target_link_libraries(WMML2 PUBLIC
-  wmml_static
+target_link_libraries(WMML_TESTS PUBLIC
+  WMML
 )
