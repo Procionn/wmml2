@@ -1,15 +1,15 @@
-include(FetchContent)
-FetchContent_Declare(
-  GTest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG b2b9072ecbe874f5937054653ef8f2731eb0f010
-)
-FetchContent_MakeAvailable(GTest)
+# include(FetchContent)
+# FetchContent_Declare(
+#   GTest
+#   GIT_REPOSITORY https://github.com/google/googletest.git
+#   GIT_TAG b2b9072ecbe874f5937054653ef8f2731eb0f010
+# )
+# FetchContent_MakeAvailable(GTest)
 
-include_directories(
-  ${GTEST_SOURCE_DIR}/googletest/include
-  ${GTEST_SOURCE_DIR}/googlemock/include
-)
+# include_directories(
+#   ${GTEST_SOURCE_DIR}/googletest/include
+#   ${GTEST_SOURCE_DIR}/googlemock/include
+# )
 
 
 

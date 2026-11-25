@@ -14,9 +14,12 @@
 #include <array>
 #include <cstdint>
 
-class stream
+namespace details {
+
+template<std::size_t stackSize>
+class BaseStream
 {
-    std::array<std::byte, STREAM_SIZE> stack;
+    std::array<std::byte, stackSize> stack;
     std::byte* lot = nullptr;
 
     std::size_t size = 0;
@@ -24,25 +27,32 @@ class stream
     std::size_t allocated_memory = 0;
 
 private:
-    void realloc();
+    void realloc(const std::size_t old_size);
     void alloc ();
     std::byte* get_buff();
     void alloc_expanding();
 
 public:
-    stream () {}
-    stream (const std::size_t& allocSize);
-    stream (const char* src, const std::size_t& allocSize);
-    ~stream ();
+    BaseStream () {}
+    BaseStream (const std::size_t& allocSize);
+    BaseStream (const char* src, const std::size_t& allocSize);
+    ~BaseStream ();
 
     std::size_t get_pos() { return headPos; }
     std::size_t get_size() { return size; }
 
     void open (const std::size_t& allocSize);
-    bool read (std::byte* s, const std::size_t count);
-    void write (std::byte* s, const std::size_t count); // записывает объект, начиная с headPos, смещая указатель на конец новых данных
-    bool seek (const uint64_t pos);
-    void rel_seek (const int64_t shift);
-    std::byte* get_ptr (const std::size_t count);
     void move(const std::size_t from, const std::size_t to);
+    void write (std::byte* s, const std::size_t count); // записывает объект, начиная с headPos, смещая указатель на конец новых данных
+    bool read (std::byte* s, const std::size_t count);
+    bool rel_read(std::byte* s, const std::size_t count);
+    bool seek (const uint64_t pos);
+    bool rel_seek (const int64_t shift);
+    [[nodiscard]] std::byte* get_ptr (const std::size_t count);
+    void resize(const std::size_t size);
 };
+
+using stream = BaseStream<STREAM_SIZE>;
+using SmallStream = BaseStream<1024>;
+
+} // namespace details

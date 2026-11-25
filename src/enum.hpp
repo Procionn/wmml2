@@ -17,14 +17,14 @@
     X(UCHAR,    11, uint8_t)          \
     X(WCHAR,    12, wchar_t)          \
     X(STRING8,  13, std::string)      \
-    X(SFLOAT,   16, std::float16_t)   \
-    X(FLOAT,    17, std::float32_t)   \
-    X(LFLOAT,   18, std::float64_t)   \
     X(BOOL,     19, bool)             \
     X(S_WMML,   20, details::s_wmml)  \
     X(E_WMML,   21, details::e_wmml)  \
-    X(LLFLOAT,  22, std::float128_t)  \
-    X(CSTRTING, 23, detailds::string) \
+    X(SFLOAT,   22, std::float16_t)   \
+    X(FLOAT,    23, std::float32_t)   \
+    X(LFLOAT,   24, std::float64_t)   \
+    X(LLFLOAT,  25, std::float128_t)  \
+    X(CSTRTING, 26, detailds::string) \
 
 #else
 #warning Used compilator is not support fixed-size floating variables. Supporting variables with floating point has been turned off
@@ -47,7 +47,6 @@
 
 #endif
 
-#define _p(name) reinterpret_cast<std::byte*>(&name), sizeof(name)
 
 namespace details {
 struct s_wmml {};

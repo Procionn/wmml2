@@ -63,10 +63,13 @@ void base_wmml::open (
 }
 
 
-void base_wmml::reset () { s.seek(start); }
+void base_wmml::reset () {
+    s.seek(start);
+    localArchiveCount = 0;
+}
 
 
-void base_wmml::save () {
+void base_wmml::save () noexcept {
     if (isOpen)
         if (!readOnly)
             write_stream_to_file();
@@ -105,16 +108,27 @@ void base_wmml::create_file () {
     start = s.get_size();
 }
 
+void base_wmml::read_archive_count () {
+    std::size_t padding = (sizeof(version) + sizeof(width_) + sizeof(height_));
+    s.seek(padding);
+    s.read(_p(archivedCount));
+}
 
-
+void base_wmml::read_height () {
+    std::size_t padding = (sizeof(version) + sizeof(width_));
+    s.seek(padding);
+    s.read(_p(height_));
+}
 
 
 
 template <> bool base_wmml::read_one<std::string>(std::string& t) {
-    int32_t size;
+    int16_t size;
     auto result = false;
     if (s.read(_p(size))) {
         s.rel_seek(sizeof(size));
+        t.reserve(size);
+        t = std::string(size, '\0');
         result = s.read(reinterpret_cast<std::byte*>(t.data()), size);
         s.rel_seek(size);
     }
@@ -123,7 +137,7 @@ template <> bool base_wmml::read_one<std::string>(std::string& t) {
 
 
 template <> void base_wmml::write_one<std::string>(const std::string& t) {
-    int32_t size = t.size();
+    int16_t size = t.size();
     s.write(_p(size));
     s.write(reinterpret_cast<std::byte*>(const_cast<char*>(t.data())), size);
 }
@@ -165,4 +179,64 @@ void base_wmml::resize (const std::size_t& size) {
 
 
 
+template <> bool base_wmml::legacy_read_one<std::string>(details::SmallStream& buff) {
+    std::byte id;
+    s.rel_read(_p(id));
+    uint16_t varSize;
+    if (id == static_cast<std::byte>(LegacyWmmlFormats::STRING)) {
+        int8_t size;
+        s.rel_read(_p(size));
+        varSize = size;
+    }
+    else if (id == static_cast<std::byte>(LegacyWmmlFormats::STRING64K)) {
+        int16_t size;
+        s.rel_read(_p(size));
+        varSize = size;
+    }
+    else if (id == static_cast<std::byte>(LegacyWmmlFormats::STRING1KK)) {
+        int32_t size;
+        s.rel_read(_p(size));
+        varSize = size;
+    }
+    else
+        return false;
 
+    buff.write(_p(varSize));
+    buff.write(s.get_ptr(varSize), varSize);
+    s.rel_seek(varSize);
+    return true;
+}
+
+template <>
+bool base_wmml::legacy_convert_one<std::string>(std::size_t& writePos) {
+    std::byte id;
+    s.rel_read(_p(id));
+    uint16_t varSize;
+    if (id == static_cast<std::byte>(LegacyWmmlFormats::STRING)) {
+        int8_t size;
+        s.rel_read(_p(size));
+        varSize = size;
+    }
+    else if (id == static_cast<std::byte>(LegacyWmmlFormats::STRING64K)) {
+        int16_t size;
+        s.rel_read(_p(size));
+        varSize = size;
+    }
+    else if (id == static_cast<std::byte>(LegacyWmmlFormats::STRING1KK)) {
+        int32_t size;
+        s.rel_read(_p(size));
+        varSize = size;
+    }
+    else
+        return false;
+    std::string var(varSize, '\0');
+    s.rel_read(reinterpret_cast<std::byte*>(var.data()), varSize);
+    std::size_t readPos = s.get_pos();
+    s.seek(writePos);
+    s.write(_p(varSize));
+    s.write(reinterpret_cast<std::byte*>(var.data()), varSize);
+    writePos += sizeof(varSize);
+    writePos += varSize;
+    s.seek(readPos);
+    return true;
+}

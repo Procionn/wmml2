@@ -1,19 +1,9 @@
 #include <iostream>
 #include "../src/stream.hpp"
 #include <cstring>
-/*class stream
-{
-    stream(const std::size_t& allocSize);
-    stream(const char* src, const std::size_t& allocSize);
-    ~stream();
 
-    bool read(std::byte* s, std::size_t count);
-    void write(std::byte* s, std::size_t count);
-    void seek(const uint64_t pos);
-    void rel_seek(const int64_t shift);
+using namespace details;
 
-};
-*/
 
 const char* data1 = "abcdefghijklmnopqrstuvwxyz123456";
 const char* data2 = "abcdefghijklmnopqrstuvwxyz1234567890";
