@@ -38,11 +38,11 @@ public:
     BaseStream (const char* src, const std::size_t& allocSize);
     ~BaseStream ();
 
-    std::size_t get_pos() { return headPos; }
-    std::size_t get_size() { return size; }
+    std::size_t get_pos() const { return headPos; }
+    std::size_t get_size() const { return size; }
 
     void open (const std::size_t& allocSize);
-    void move(const std::size_t from, const std::size_t to);
+    void move(const std::size_t from, const std::size_t to); // сдвигает хвост потока: данные, начинающиеся с позиции `from`, переносятся в позицию `to`, размер потока корректируется (если to > from — вставка, если to < from — удаление диапазона [to, from))
     void write (std::byte* s, const std::size_t count); // записывает объект, начиная с headPos, смещая указатель на конец новых данных
     bool read (std::byte* s, const std::size_t count);
     bool rel_read(std::byte* s, const std::size_t count);

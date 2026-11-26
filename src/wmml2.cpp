@@ -56,8 +56,8 @@ void base_wmml::open_file (const bool createFile) {
 }
 
 
-void base_wmml::open (
-    const std::filesystem::path& pathToOpenedFile) { // TODO // it should set readOnly in false
+// TODO // it should set readOnly in false
+void base_wmml::open (const std::filesystem::path& pathToOpenedFile) {
     create_file();
     write_stream_to_file();
 }
@@ -143,8 +143,10 @@ template <> void base_wmml::write_one<std::string>(const std::string& t) {
 }
 
 
-base_wmml::base_wmml (const std::byte* pack, std::size_t size, bool readonly, const std::filesystem::path& path)
-    : pack_ptr(const_cast<std::byte*>(pack)), pack_size(std::move(size)), readOnly(readonly), filePath(path) {}
+base_wmml::base_wmml (const std::byte* pack, std::size_t size, bool readonly,
+                      const std::filesystem::path& path)
+    : pack_ptr(const_cast<std::byte*>(pack)), pack_size(std::move(size)), readOnly(readonly),
+      filePath(path) {}
 
 
 void base_wmml::read_file_in_stream () {

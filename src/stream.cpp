@@ -141,17 +141,16 @@ void details::BaseStream<stackSize>::resize(const std::size_t newSize) {
 
 template<std::size_t stackSize>
 void details::BaseStream<stackSize>::move (const std::size_t from, const std::size_t to) {
-    assert(from < size); // Unable to start copying abroad stream
+    assert(from <= size); // Unable to start copying abroad stream
     const std::size_t old_size = size;
-    std::size_t moved_size = size - from;
+    const std::size_t moved_size = size - from;
     size = to + moved_size;
     if (size > STREAM_SIZE && size > allocated_memory)
         realloc(old_size);
-    assert(to < size);
-    assert(to + moved_size >= size);
-    memmove(static_cast<void*>(&get_buff()[from]),
-            static_cast<void*>(&get_buff()[to]),
-            moved_size);
+    if (moved_size != 0)
+        memmove(static_cast<void*>(&get_buff()[to]),
+                static_cast<void*>(&get_buff()[from]),
+                moved_size);
 }
 
 template class details::BaseStream<STREAM_SIZE>;

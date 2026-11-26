@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <stdfloat>
 #include <string>
-#include "stream.hpp"
 
 #if __STDCPP_FLOAT128_T__ && __STDCPP_FLOAT64_T__ && __STDCPP_FLOAT32_T__ && __STDCPP_FLOAT16_T__
 #define SUPPORTED_TYPES(X)            \

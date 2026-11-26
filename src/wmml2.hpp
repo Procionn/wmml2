@@ -1,13 +1,18 @@
 #pragma once
+/**
+ * @file The main library header
+ */
 #include <filesystem>
 #include <fstream>
 #include "stream.hpp"
 #include "macro.hpp"
-
-#include <iostream>
 #include "enum.hpp"
+
 #include <cstring>
 #include <cassert>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 
 /**
@@ -56,9 +61,7 @@ protected:
     bool isOpen = false;
     bool convertAutomatically = true; // TODO: add changing it flag
     bool autoDeletingFilesWithoutMetadata = true; // TODO: add changing it flag
-    /*
-    ...
-    */
+
     /**
      * @brief \~russian Создаёт объект WMML, привязанный к пакету типов, режиму
      *            доступа и пути к файлу.
@@ -288,9 +291,6 @@ protected:
      * \~english The position is set right after the version and width fields.
      */
     void read_height();
-
-
-
 
     /**
      * @brief \~russian Формирует текст сообщения об ошибке выхода за границы файла.
@@ -560,7 +560,75 @@ template <> bool base_wmml::legacy_read_one<std::string>(details::SmallStream& b
 template <> bool base_wmml::legacy_convert_one<std::string>(std::size_t& writePos);
 
 
+namespace details {
 
+/**
+ * @brief \~russian Возвращает размер (в байтах) поля типа `T`, записанного по
+ *            позиции `pos` потока.
+ * @brief \~english Returns the size (in bytes) of a field of type `T` stored at
+ *            stream position `pos`.
+ *
+ * \~russian Поля с плавающей точкой и целые имеют фиксированный размер `sizeof(T)`.
+ *      Строки имеют переменную длину: 16-битная длина + байты строки.
+ *      Позиция чтения (головка) восстанавливается после измерения.
+ *
+ * \~english Floating point and integer fields have a fixed size of `sizeof(T)`.
+ *      Strings have a variable length: a 16-bit length plus the string bytes.
+ *      The stream head is restored after measuring.
+ *
+ * @tparam T \~russian тип поля; \~english the field type.
+ * @param s \~russian поток; \~english the stream.
+ * @param pos \~russian начало поля в потоке; \~english the field start position.
+ * @return \~russian размер поля в байтах; \~english the field size in bytes.
+ * @throws std::runtime_error \~russian при выходе за границы потока.
+ *                          \~english on seeking beyond the stream range.
+ */
+template <typename T>
+inline std::size_t field_size_at(stream& s, const std::size_t pos) {
+    if constexpr (std::is_same_v<T, std::string>) {
+        const std::size_t saved = s.get_pos();
+        assert_r(s.seek(pos), "Attempt to measure field size out of stream range");
+        int16_t len;
+        assert_r(s.read(_p(len)), "Attempt to read field length out of stream range");
+        s.seek(saved);
+        return sizeof(len) + static_cast<std::size_t>(len);
+    }
+    else {
+        return sizeof(T);
+    }
+}
+
+/**
+ * @brief \~russian Пропускает одно поле типа `T`: сдвигает головку потока вперёд
+ *            на размер поля, не копируя данные.
+ * @brief \~english Skips a single field of type `T`: advances the stream head by
+ *            the field size without copying the data.
+ *
+ * \~russian Для строк сначала считывается 16-битная длина, затем головка
+ *      сдвигается на длину + sizeof(длины).
+ *
+ * \~english For strings the 16-bit length is read first, then the head is
+ *      advanced by the length plus the size of the length field.
+ *
+ * @tparam T \~russian тип поля; \~english the field type.
+ * @param s \~russian поток; \~english the stream.
+ * @return \~russian `true` при успехе, `false` при выходе за границы данных;
+ *         \~english `true` on success, `false` when reading beyond the data range.
+ */
+template <typename T>
+inline bool skip_field(stream& s) {
+    if constexpr (std::is_same_v<T, std::string>) {
+        int16_t len;
+        if (!s.rel_read(_p(len)))
+            return false;
+        return s.rel_seek(len);
+    }
+    else {
+        return s.rel_seek(sizeof(T));
+    }
+}
+
+} // namespace details
 
 
 /**
@@ -606,8 +674,6 @@ template <> bool base_wmml::legacy_convert_one<std::string>(std::size_t& writePo
 template <typename... Args>
 class wmml : public base_wmml
 {
-    /** \~russian Статический пакет хэшей типов схемы объекта;
-     *  \~english Static pack of the object schema's type hashes; */
     inline static constexpr std::array<std::byte, sizeof...(Args)> pack = {
         type_to_hash<Args>()...
     };
@@ -652,13 +718,9 @@ class wmml : public base_wmml
         read_archive_count();
         read_height();
         if (!version_is_valide()) {
-            //try {
-                convert_stream_from_1_4_to_1_5_version();
-                if (!readOnly && convertAutomatically)
-                    save();
-            //} catch (const std::exception& e) {
-            //    throw std::runtime_error(std::string("WMML Error in converting: ") + e.what());
-            //}
+            convert_stream_from_1_4_to_1_5_version();
+            if (!readOnly && convertAutomatically)
+                save();
         }
         else if (!hash_is_valide())
             throw std::runtime_error(
@@ -772,13 +834,14 @@ public:
      *
      * @param file_stream \~russian буфер с байтами WMML (включая заголовок);
      *                   \~english buffer with WMML bytes (including the header).
+     * @param streamSize \~russian размер буфера;
+     *                   \~english buffer size.
      * @throws std::runtime_error \~russian при несовпадении заголовка с ожидаемой
      *                          схемой или ошибке конвертации.
      *                          \~english on header mismatch with the expected
      *                          schema or on conversion error.
      */
-    wmml (const char* file_stream) : base_wmml(pack.data(), sizeof(pack), true, "") {
-        std::size_t streamSize = strlen(file_stream);
+    wmml (const char* file_stream, const std::size_t streamSize) : base_wmml(pack.data(), sizeof(pack), true, "") {
         s.open(streamSize);
         s.write(reinterpret_cast<std::byte*>(const_cast<char*>(file_stream)), streamSize);
         init();
@@ -891,15 +954,259 @@ public:
     }
 
 
-    // const char* get_stream_ptr(const std::size_t& pos, const std::size_t& size);
-    // а нахуя это здесь?
-    // Это требуется для низкоуровневого чтения данных напрямую из стрима, без копирований
-    // В целом, это на вряд ли даст весомый выигрыш. А вот потенциальных ошибок в пользовательском коде может наплодить уйму
-    // skip // TODO
+    /**
+     * @brief \~russian Возвращает текущий размер внутреннего потока в байтах.
+     * @brief \~english Returns the current size of the internal stream in bytes.
+     *
+     * \~russian Удобно использовать вместе с `get_stream_ptr` для получения
+     *      полного содержимого потока.
+     * \~english Handy to use together with `get_stream_ptr` to obtain the whole
+     *      stream contents.
+     */
+    std::size_t get_stream_size() const { return s.get_size(); }
 
-    // remove object // TODO
-    // overwrite sector // TODO
+    /**
+     * @brief \~russian Возвращает указатель на участок внутреннего потока,
+     *            начинающийся с позиции `pos` и имеющий длину `size` байт.
+     * @brief \~english Returns a pointer to a region of the internal stream,
+     *            starting at position `pos` and `size` bytes long.
+     *
+     * \~russian Позволяет записывать WMML-файл напрямую, например, в архив,
+     *      минуя запись в файл на диске. Позиция чтения (головка) при этом
+     *      устанавливается в `pos`.
+     *
+     * \~english Allows writing the WMML file directly (e.g. into an archive)
+     *      without saving it to a file on disk. The stream head is set to
+     *      `pos` as a side effect.
+     *
+     * @param pos \~russian начало участка в потоке; \~english the region start
+     *                 position in the stream;
+     * @param size \~russian длина участка в байтах; \~english the region length in bytes.
+     * @return \~russian указатель на байты участка (действителен до следующей
+     *              модификации потока);
+     *         \~english pointer to the region bytes (valid until the next stream
+     *                 modification).
+     * @throws std::runtime_error \~russian при выходе за границы потока.
+     *                          \~english on seeking beyond the stream range.
+     */
+    const char* get_stream_ptr(const std::size_t& pos, const std::size_t& size) {
+        assert_r(s.seek(pos), out_range_error());
+        const std::byte* ptr = s.get_ptr(size);
+        assert_r(ptr != nullptr, out_range_error());
+        return reinterpret_cast<const char*>(ptr);
+    }
 
+    /**
+     * @brief \~russian Пропускает целый блок (объект схемы) без копирования данных
+     *            в переменные.
+     * @brief \~english Skips a whole block (one object of the schema) without
+     *            copying the data into variables.
+     *
+     * \~russian Аналогичен вызову `read`, но не читает значения: головка потока
+     *      сдвигается вперёд на суммарный размер всех полей блока. Для строк
+     *      учитывается их переменная длина (16-битная длина + байты). Если
+     *      позиция находится в заголовке, она возвращается в начало данных
+     *      (`start`).
+     *
+     * \~english Similar to a `read` call, but does not fetch values: the stream
+     *      head is advanced by the total size of all fields in the block. For
+     *      strings their variable length (16-bit length + bytes) is accounted
+     *      for. If the position is in the header, it is moved back to the start
+     *      of the data (`start`).
+     *
+     * @return \~russian `true`, если блок целиком находится в данных,
+     *         `false`, если при пропуске головка вышла за конец потока;
+     *         \~english `true` if the whole block is within the data,
+     *         `false` if the head seeks beyond the end of the stream while skipping;
+     * @throws std::runtime_error \~russian при выходе позиции за границы файла.
+     *                          \~english if the position seeks beyond the file range.
+     */
+    bool skip() {
+        if (s.get_pos() < start)
+            assert_r(s.seek(start), out_range_error());
+        return (details::skip_field<Args>(s) && ...);
+    }
+
+    /**
+     * @brief \~russian Удаляет объект схемы с номером `objectNumber`, сдвигая
+     *            остаток потока влево.
+     * @brief \~english Removes the schema object at index `objectNumber`, shifting
+     *            the rest of the stream to the left.
+     *
+     * \~russian Позиция объекта вычисляется по полному позиционированию:
+     *      отсчёт ведётся от `start`, суммируя размеры предыдущих объектов
+     *      (для строк — с учётом их переменной длины). Данные, следующе за
+     *      удалённым объектом, перемещаются на его место, размер потока
+     *      уменьшается, а головка восстанавливается в `start`.
+     *      Счётчик объектов `height_` уменьшается на 1.
+     *
+     * \~english The object position is computed by full positioning: counting
+     *      from `start` and summing the sizes of the preceding objects (for
+     *      strings — accounting for their variable length). The data following
+     *      the removed object are moved to its place, the stream is truncated,
+     *      and the head is restored to `start`. The object counter `height_`
+     *      is decremented by 1.
+     *
+     * @param objectNumber \~russian порядковый номер объекта (отсчёт от 0);
+     *                    \~english zero-based object index.
+     * @throws std::runtime_error \~russian при выходе номера объекта за границы
+     *                          данных или позиции за границы потока.
+     *                          \~english when the object index is out of the data
+     *                          range or the position seeks beyond the stream range.
+     */
+    void remove_object(const std::size_t objectNumber) {
+        assert_r(objectNumber < height_, "Object index is out of range");
+        const std::size_t objStart = object_start(objectNumber);
+        const std::size_t objEnd =
+            objStart + block_size_at(objStart, std::index_sequence_for<Args...>{});
+        s.move(objEnd, objStart);
+        s.seek(start);
+        --height_;
+    }
+
+    /**
+     * @brief \~russian Перезаписывает сектор (поле) внутри объекта с номером
+     *            `objectNumber`.
+     * @brief \~english Overwrites a sector (field) inside the object at index
+     *            `objectNumber`.
+     *
+     * \~russian `Index` — порядковый номер поля в схеме (начиная с 0); тип
+     *      значения выводится из аргумента и сверяется с типом поля схемы
+     *      через `static_assert`. Позиция объекта вычисляется по полному
+     *      позиционированию от `start`. Для полей фиксированного размера
+     *      значение записывается поверх старых данных. Для строк при изменении
+     *      длины выполняется сдвиг хвоста потока: данные, следующие за строкой,
+     *      перемещаются вправо (при удлинении) или влево (при укорочении),
+     *      а затем записываются новая 16-битная длина и байты строки.
+     *      После операции головка восстанавливается в `start`.
+     *
+     * \~english `Index` is the zero-based field number in the schema; the value
+     *      type is deduced from the argument and checked against the schema
+     *      field type via `static_assert`. The object position is computed by
+     *      full positioning from `start`. Fixed-size fields are overwritten in
+     *      place. For strings whose length changes a stream tail shift is
+     *      performed: the data following the string are moved right (on
+     *      lengthening) or left (on shortening), then the new 16-bit length and
+     *      the string bytes are written. After the operation the head is
+     *      restored to `start`.
+     *
+     * @tparam Index \~russian порядковый номер поля в схеме;
+     *              \~english the zero-based field number in the schema;
+     * @tparam T \~russian тип значения (выводится из аргумента, должен
+     *             совпадать с типом поля `Index`);
+     *             \~english the value type (deduced from the argument, must
+     *             match the type of field `Index`);
+     * @param objectNumber \~russian порядковый номер объекта (отсчёт от 0);
+     *                    \~english zero-based object index.
+     * @param value \~russian новое значение поля; \~english the new field value.
+     * @throws std::runtime_error \~russian при несовпадении типов (компиляция),
+     *                          выходе номера объекта за границы данных или
+     *                          позиции за границы потока.
+     *                          \~english on type mismatch (compile time), object
+     *                          index out of range, or position out of stream range.
+     */
+    template <std::size_t Index, typename T>
+    void overwrite_sector(const std::size_t objectNumber, const T& value) {
+        using FieldT = typename std::tuple_element<Index, std::tuple<Args...>>::type;
+        static_assert(std::is_same_v<T, FieldT>,
+                      "The value type does not match the type of the schema field at Index");
+        assert_r(objectNumber < height_, "Object index is out of range");
+        const std::size_t objStart = object_start(objectNumber);
+        const std::size_t fieldPos =
+            objStart + field_offset_impl<Index>(objStart, std::index_sequence_for<Args...>{});
+        if constexpr (std::is_same_v<T, std::string>) {
+            int16_t oldLen = 0;
+            assert_r(s.seek(fieldPos), out_range_error());
+            assert_r(s.read(_p(oldLen)), out_range_error());
+            const std::size_t oldLenSize = static_cast<std::size_t>(oldLen);
+            if (value.size() != oldLenSize) {
+                const std::size_t tailFrom = fieldPos + sizeof(oldLen) + oldLenSize;
+                const std::size_t tailTo = fieldPos + sizeof(oldLen) + value.size();
+                s.move(tailFrom, tailTo);
+            }
+            s.seek(fieldPos);
+            int16_t newLen = static_cast<int16_t>(value.size());
+            s.write(_p(newLen));
+            s.write(reinterpret_cast<std::byte*>(const_cast<char*>(value.data())), value.size());
+        }
+        else {
+            assert_r(s.seek(fieldPos), out_range_error());
+            s.write(reinterpret_cast<std::byte*>(const_cast<T*>(&value)), sizeof(value));
+        }
+        s.seek(start);
+    }
+
+private:
+    /**
+     * @brief \~russian Вычисляет суммарный размер блока, начинающегося с позиции
+     *            `pos` (сумма размеров всех полей схемы).
+     * @brief \~english Computes the total size of the block starting at position
+     *            `pos` (the sum of the sizes of all schema fields).
+     *
+     * \~russian Для строк размер вычисляется в рантайме по 16-битной длине,
+     *      сохранённой в самом блоке.
+     *
+     * \~english For strings the size is computed at runtime from the 16-bit
+     *      length stored in the block itself.
+     *
+     * @param pos \~russian начало блока; \~english the block start position.
+     * @return \~russian размер блока в байтах; \~english the block size in bytes.
+     */
+    template <std::size_t... Is>
+    std::size_t block_size_at(const std::size_t pos, std::index_sequence<Is...>) {
+        std::size_t total = 0;
+        ((total += details::field_size_at<Args>(s, pos + total)), ...);
+        return total;
+    }
+
+    /**
+     * @brief \~russian Вычисляет абсолютную позицию начала объекта с номером
+     *            `objectNumber` (полное позиционирование от `start`).
+     * @brief \~english Computes the absolute start position of the object at index
+     *            `objectNumber` (full positioning from `start`).
+     *
+     * \~russian Суммирует размеры всех предыдущих объектов, начиная с `start`.
+     *      Позиция головки после вызова не меняется.
+     *
+     * \~english Sums the sizes of all preceding objects, starting from `start`.
+     *      The stream head is not changed by the call.
+     *
+     * @param objectNumber \~russian порядковый номер объекта (отсчёт от 0);
+     *                    \~english zero-based object index.
+     * @return \~russian позиция начала объекта в потоке;
+     *         \~english the object start position in the stream.
+     */
+    std::size_t object_start(const std::size_t objectNumber) {
+        std::size_t pos = start;
+        for (std::size_t i = 0; i < objectNumber; ++i)
+            pos += block_size_at(pos, std::index_sequence_for<Args...>{});
+        return pos;
+    }
+    /**
+     * @brief \~russian Вычисляет смещение `Index`-го поля внутри блока, начинающегося
+     *            с позиции `objStart` (сумма размеров полей, предшествующих ему).
+     * @brief \~english Computes the offset of the `Index`-th field inside the block
+     *            starting at `objStart` (the sum of the sizes of the fields that
+     *            precede it).
+     *
+     * \~russian Для строк размер вычисляется в рантайме по 16-битной длине,
+     *      сохранённой в самом блоке.
+     *
+     * \~english For strings the size is computed at runtime from the 16-bit
+     *      length stored in the block itself.
+     *
+     * @tparam Index \~russian порядковый номер целевого поля;
+     *              \~english the zero-based index of the target field;
+     * @param objStart \~russian начало блока; \~english the block start position.
+     * @return \~russian смещение поля относительно начала блока;
+     *         \~english the field offset relative to the block start.
+     */
+    template <std::size_t Index, std::size_t... Is>
+    std::size_t field_offset_impl(const std::size_t objStart, std::index_sequence<Is...>) {
+        std::size_t offset = 0;
+        ((offset += (Is < Index ? details::field_size_at<Args>(s, objStart + offset) : 0)), ...);
+        return offset;
+    }
 
 
 };
